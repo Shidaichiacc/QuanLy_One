@@ -4,6 +4,9 @@
 
 - Sửa bản cài bằng `git clone` thiếu `data/database/seed/account_tong.bak` do quy tắc bỏ qua `*.bak`, khiến thiết lập MSSQL đứng ở 76% và báo `Login failed ... account_tong` (State 38).
 - Đưa backup mẫu MSSQL vào Git và kiểm tra file ngay đầu quy trình; nếu gói cài không đầy đủ, Web báo lỗi rõ ràng thay vì chờ database không tồn tại.
+- Tinh gọn màn thiết lập database lần đầu: bỏ nút chép đồng thời hai mật khẩu, đặt nút hiện/ẩn mật khẩu riêng ở góc phải và thêm nhật ký ngắn theo từng mốc giờ, phần trăm, kết quả hoặc lỗi.
+- Đặt Thạch Chí cổ điển làm giao diện mặc định cho máy cài mới; không tự đổi theme mà máy đang sử dụng khi nâng cấp.
+- Bỏ mục Cập nhật phiên bản khỏi menu Hệ thống; tự kiểm tra một lần mỗi phiên và hiển thị trạng thái dưới số phiên bản, kèm popup cập nhật tối giản khi bấm vào.
 
 ## v1.3.0
 

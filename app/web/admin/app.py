@@ -3309,21 +3309,21 @@ pre.log{background:#05080f;border:1px solid var(--line);border-radius:9px;paddin
 <section class="nav-group {{'open' if page in ('site_settings','site_articles','site_article') else ''}}" data-group="website"><button type="button" class="nav-group-toggle"><span class="nav-icon">🌐</span><span class="nav-group-title">Quản trị Website</span><span class="nav-chevron">▶</span></button><div class="nav-items">
 <a href="{{ site_admin_url() }}" class="{{'active' if page=='site_settings' else ''}}"><span class="nav-icon">⚙️</span><span class="nav-label">Cấu hình Website</span></a>
 <a href="{{ site_articles_url() }}" class="{{'active' if page=='site_articles' else ''}}"><span class="nav-icon">📝</span><span class="nav-label">Quản lý bài viết</span></a></div></section>
-<section class="nav-group {{'open' if page in ('server_setup','database','account_settings','update') else ''}}" data-group="system"><button type="button" class="nav-group-toggle"><span class="nav-icon">🔧</span><span class="nav-group-title">Hệ thống</span><span class="nav-chevron">▶</span></button><div class="nav-items">
+<section class="nav-group {{'open' if page in ('server_setup','database','account_settings') else ''}}" data-group="system"><button type="button" class="nav-group-toggle"><span class="nav-icon">🔧</span><span class="nav-group-title">Hệ thống</span><span class="nav-chevron">▶</span></button><div class="nav-items">
 <a href="{{ manager_setup_url() }}" class="{{'active' if page in ('server_setup','database') else ''}}"><span class="nav-icon">🗄️</span><span class="nav-label">Server & Dữ liệu</span></a>
 <a href="{{ manager_account_url() }}" class="{{'active' if page=='account_settings' else ''}}"><span class="nav-icon">🔐</span><span class="nav-label">Đổi tài khoản Admin</span></a>
-<a href="{{ url_for('update_center') }}" class="{{'active' if page=='update' else ''}}"><span class="nav-icon">⬆️</span><span class="nav-label">Cập nhật phiên bản</span></a>
 <a href="{{ url_for('manager_ext.logout') }}"><span class="nav-icon">🚪</span><span class="nav-label">Đăng xuất</span></a></div></section>
 </nav><div class="sidebar-power">
 <form method="post" action="{{ url_for('shutdown_host') }}" data-confirm="{{ 'Server còn chạy. Hệ thống sẽ Stop All an toàn rồi TẮT MÁY. Tiếp tục?' if host_locked else 'TẮT MÁY CHỦ? Máy sẽ tắt hoàn toàn.' }}" data-dialog-danger="1"><button class="power-off" title="Tắt máy chủ">⏻</button></form>
 <form method="post" action="{{ url_for('reboot_host') }}" data-confirm="{{ 'Server còn chạy. Hệ thống sẽ Stop All an toàn rồi KHỞI ĐỘNG LẠI máy. Tiếp tục?' if host_locked else 'KHỞI ĐỘNG LẠI MÁY CHỦ?' }}" data-dialog-danger="1"><button title="Khởi động lại máy chủ">↻</button></form>
-</div><div class="sidebar-version"><span class="version-label">PHIÊN BẢN</span><b>v{{ app_version }}</b><a id="sidebarUpdate" class="sidebar-update" href="{{url_for('update_center')}}" data-check-url="{{url_for('update_check')}}" title="Kiểm tra bản cập nhật"><span class="sidebar-update-icon">↻</span><span class="sidebar-update-label">Đang kiểm tra…</span></a></div></aside><div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+</div><div class="sidebar-version"><span class="version-label">PHIÊN BẢN</span><b>v{{ app_version }}</b><button type="button" id="sidebarUpdate" class="sidebar-update" data-check-url="{{url_for('update_check')}}" data-cache-key="{{update_session_key}}" title="Kiểm tra bản cập nhật"><span class="sidebar-update-icon">↻</span><span class="sidebar-update-label">Đang kiểm tra…</span></button></div></aside><div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 <div class="app"><header class="topbar"><button type="button" class="mobile-toggle" id="mobileToggle">☰</button>{% if server_versions|length > 1 %}<details class="header-server-picker"><summary title="Đổi server active">Server: <b>{{ header_server.name if header_server else 'Chưa chọn' }}</b><span>▾</span></summary><div class="server-picker-menu"><div class="server-picker-title">Chọn server active<small>{{'Cần Stop All trước khi đổi' if host_locked else 'Chọn phiên bản muốn sử dụng'}}</small></div>{% for server_name in server_versions %}{% if header_server and server_name == header_server.name %}<div class="server-picker-current"><b>{{server_name}}</b><span>Đang dùng</span></div>{% else %}<form method="post" action="{{url_for('manager_ext.activate')}}" data-confirm="Kích hoạt server {{server_name}}? IP của máy hiện tại sẽ được áp dụng vào phiên bản này."><input type="hidden" name="csrf_token" value="{{manager_csrf}}"><input type="hidden" name="server_name" value="{{server_name}}"><input type="hidden" name="next" value="{{url_for('dashboard')}}"><button type="submit" class="server-picker-option" {{'disabled' if host_locked else ''}}>{{server_name}}</button></form>{% endif %}{% endfor %}<a href="{{manager_setup_url()}}">Quản lý phiên bản…</a></div></details>{% else %}<div class="header-server" title="{{ header_server.path if header_server else 'Chưa kích hoạt phiên bản' }}">Server: <b>{{ header_server.name if header_server else 'Chưa chọn' }}</b></div>{% endif %}<div class="system-status" id="systemStatus" data-url="{{ url_for('system_status') }}"><span class="status-chip status-ip">IP&nbsp;<b data-field="ip">--</b></span><span class="status-chip status-cpu">CPU&nbsp;<b data-field="cpu">--</b></span><span class="status-chip status-ram">RAM&nbsp;<b data-field="ram">--</b></span><span class="status-chip status-disk">Ổ đĩa&nbsp;<b data-field="disk">--</b></span><span class="status-chip status-time">🕒&nbsp;<b data-field="time">--</b></span></div></header><main>
 {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat,m in msgs %}
 <div class="flash {{cat}}">{{m}}</div>{% endfor %}{% endwith %}
 {{ body|safe }}
 </main></div>
 <div class="jx-dialog-overlay" id="jxDialogOverlay" hidden aria-hidden="true"><section class="jx-dialog" id="jxDialog" role="dialog" aria-modal="true" aria-labelledby="jxDialogTitle"><div class="jx-dialog-head"><span class="jx-dialog-icon" id="jxDialogIcon">?</span><h2 id="jxDialogTitle">Xác nhận thao tác</h2></div><div class="jx-dialog-body"><p class="jx-dialog-message" id="jxDialogMessage"></p><input class="jx-dialog-input" id="jxDialogInput" autocomplete="off" hidden><div class="jx-dialog-error" id="jxDialogError"></div></div><div class="jx-dialog-foot"><button type="button" class="mut" id="jxDialogCancel">Hủy</button><button type="button" class="jx-dialog-confirm" id="jxDialogConfirm">Xác nhận</button></div></section></div>
+<dialog class="update-dialog" id="updateDialog"><div class="update-dialog-head"><span class="update-dialog-icon" id="updateDialogIcon">↻</span><div><small>CẬP NHẬT JXNATIVE</small><h2 id="updateDialogTitle">Đang kiểm tra…</h2></div><button type="button" class="mut update-dialog-close" aria-label="Đóng">✕</button></div><div class="update-dialog-body"><p id="updateDialogMessage">Đang đọc bản phát hành mới nhất từ GitHub.</p><p class="update-dialog-note" id="updateDialogNote" hidden>Hãy backup database và Stop All trước khi chạy <code>update.sh</code>.</p></div><div class="update-dialog-actions"><button type="button" class="mut" id="updateRetry">Kiểm tra lại</button><a class="btn mut" id="updateRelease" target="_blank" rel="noopener" hidden>Xem bản phát hành</a><a class="btn ok" id="updateDownload" target="_blank" rel="noopener" hidden>Tải gói cập nhật</a><button type="button" class="update-dialog-close">Đóng</button></div></dialog>
 <script>
 (function(){
   const overlay=document.getElementById('jxDialogOverlay'),dialog=document.getElementById('jxDialog'),title=document.getElementById('jxDialogTitle'),icon=document.getElementById('jxDialogIcon'),message=document.getElementById('jxDialogMessage'),input=document.getElementById('jxDialogInput'),error=document.getElementById('jxDialogError'),cancel=document.getElementById('jxDialogCancel'),accept=document.getElementById('jxDialogConfirm');let finish=null,mode='confirm',options={};
@@ -3351,9 +3351,14 @@ pre.log{background:#05080f;border:1px solid var(--line);border-radius:9px;paddin
   refresh();setInterval(refresh,5000);setInterval(renderClock,1000);
 })();
 (function(){
-  const link=document.getElementById('sidebarUpdate');if(!link)return;const label=link.querySelector('.sidebar-update-label');
-  async function check(){try{const response=await fetch(link.dataset.checkUrl,{headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();link.classList.remove('available','checked','failed');if(data.status==='ok'&&data.available){link.classList.add('available');label.textContent='Có v'+data.latest;link.title='Có bản JXNative v'+data.latest+' — bấm để xem'}else if(data.status==='ok'){link.classList.add('checked');label.textContent='Đã là bản mới nhất';link.title='JXNative đang ở bản mới nhất'}else if(data.status==='no_release'){link.classList.add('checked');label.textContent='Chưa có Release';link.title=data.message||'Repository chưa có Release'}else{link.classList.add('failed');label.textContent='Không kiểm tra được';link.title=data.message||'Không kiểm tra được GitHub'}}catch(error){link.classList.add('failed');label.textContent='Không kiểm tra được';link.title=error.message||'Lỗi kết nối GitHub'}}
-  check();
+  const link=document.getElementById('sidebarUpdate'),dialog=document.getElementById('updateDialog');if(!link||!dialog)return;
+  const label=link.querySelector('.sidebar-update-label'),icon=link.querySelector('.sidebar-update-icon'),title=document.getElementById('updateDialogTitle'),message=document.getElementById('updateDialogMessage'),note=document.getElementById('updateDialogNote'),release=document.getElementById('updateRelease'),download=document.getElementById('updateDownload'),retry=document.getElementById('updateRetry'),dialogIcon=document.getElementById('updateDialogIcon');
+  const cacheKey='jx-update:'+link.dataset.cacheKey;let current=null;
+  function render(data){current=data;link.classList.remove('available','checked','failed');release.hidden=true;download.hidden=true;note.hidden=true;if(data.status==='ok'&&data.available){link.classList.add('available');icon.textContent='↑';label.textContent='Có bản v'+data.latest;link.title='Có bản JXNative v'+data.latest;dialogIcon.textContent='↑';title.textContent='Có bản mới v'+data.latest;message.textContent='Máy đang dùng v'+data.current+'. Bạn có thể tải bản mới rồi nâng cấp bằng update.sh.';note.hidden=false}else if(data.status==='ok'){link.classList.add('checked');icon.textContent='✓';label.textContent='Đã là bản mới nhất';link.title='JXNative đang ở bản mới nhất';dialogIcon.textContent='✓';title.textContent='Đã là bản mới nhất';message.textContent='Máy đang dùng JXNative v'+data.current+'.';}else if(data.status==='no_release'){link.classList.add('checked');icon.textContent='•';label.textContent='Chưa có bản phát hành';link.title=data.message||'Repository chưa có Release';dialogIcon.textContent='•';title.textContent='Chưa có bản phát hành';message.textContent=data.message||'GitHub chưa có Release chính thức.'}else{link.classList.add('failed');icon.textContent='!';label.textContent='Không kiểm tra được';link.title=data.message||'Không kiểm tra được GitHub';dialogIcon.textContent='!';title.textContent='Không kiểm tra được';message.textContent=data.message||'Không thể kết nối GitHub lúc này.'}if(data.url){release.href=data.url;release.hidden=false}if(data.available&&data.download_url){download.href=data.download_url;download.hidden=false}}
+  async function check(force=false){retry.disabled=true;try{const response=await fetch(link.dataset.checkUrl+(force?'?refresh=1':''),{headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();render(data);try{sessionStorage.setItem(cacheKey,JSON.stringify(data))}catch(error){}}catch(error){render({status:'error',message:'Lỗi kết nối GitHub: '+(error.message||'không xác định')})}finally{retry.disabled=false}}
+  link.addEventListener('click',()=>{if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','')});
+  dialog.querySelectorAll('.update-dialog-close').forEach(button=>button.addEventListener('click',()=>dialog.close()));dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});retry.addEventListener('click',()=>check(true));
+  try{const cached=JSON.parse(sessionStorage.getItem(cacheKey)||'null');if(cached&&cached.status)render(cached);else check()}catch(error){check()}
 })();
 </script></body></html>
 """
@@ -3367,6 +3372,7 @@ def page(body, **kw):
     kw.setdefault("header_server", active_server_info())
     kw.setdefault("server_versions", available_server_versions())
     kw.setdefault("manager_csrf", session.get("csrf_token", ""))
+    kw.setdefault("update_session_key", f"{APP_VERSION}:{session.get('manager_login_at', '')}")
     return render_template_string(BASE, body=render_template_string(body, **kw), **kw)
 
 app.extensions["render_manager_page"] = page
@@ -3568,77 +3574,30 @@ def system_status():
 
 @app.route("/api/update-check")
 def update_check():
-    return jsonify(_github_release_status(APP_VERSION))
+    force = request.args.get("refresh") == "1"
+    cache_id = f"{APP_VERSION}:{UPDATE_REPOSITORY}"
+    cached = session.get("jx_update_status")
+    if not force and isinstance(cached, dict) and cached.get("cache_id") == cache_id:
+        return jsonify(cached)
+    result = _github_release_status(APP_VERSION, force=force)
+    # Chỉ giữ dữ liệu cần cho popup để cookie phiên luôn nhỏ và không chứa release notes.
+    compact = {
+        key: result.get(key)
+        for key in (
+            "status", "current", "latest", "available", "message", "url",
+            "download_url", "download_name", "checked_at",
+        )
+        if result.get(key) is not None
+    }
+    compact["cache_id"] = cache_id
+    session["jx_update_status"] = compact
+    return jsonify(compact)
 
 
 @app.route("/system/update")
 def update_center():
-    update = _github_release_status(APP_VERSION, force=request.args.get("refresh") == "1")
-    repository_url = f"https://github.com/{UPDATE_REPOSITORY}"
-    body = r"""
-    <h1 class="page-heading">Cập nhật JXNative</h1>
-    <div class="card update-overview">
-      <div><small>Phiên bản đang dùng</small><b>v{{app_version}}</b></div>
-      <div><small>Nguồn chính thức</small><b>{{repository}}</b></div>
-      <div><small>Lần kiểm tra</small><b>{{checked_time}}</b></div>
-    </div>
-
-    {% if update.status == 'ok' and update.available %}
-    <div class="card update-state available">
-      <h2>Có bản mới: v{{update.latest}}</h2>
-      <p>JXNative v{{app_version}} có thể nâng cấp lên <b>v{{update.latest}}</b>.</p>
-      {% if update.published_at %}<p class="muted">GitHub phát hành: {{update.published_at}}</p>{% endif %}
-      <div class="update-actions">
-        <a class="btn ok" href="{{update.url}}" target="_blank" rel="noopener">Xem GitHub Release</a>
-        {% if update.download_url %}<a class="btn" href="{{update.download_url}}">Tải {{update.download_name}}</a>{% endif %}
-        {% if update.checksum_url %}<a class="btn mut" href="{{update.checksum_url}}">Tải SHA256</a>{% endif %}
-      </div>
-      {% if update.notes %}<pre class="release-notes">{{update.notes}}</pre>{% endif %}
-    </div>
-    {% elif update.status == 'ok' %}
-    <div class="card update-state current">
-      <h2>Đã là bản mới nhất</h2>
-      <p>Máy đang dùng v{{app_version}}; GitHub Release mới nhất là v{{update.latest}}.</p>
-      <div class="update-actions"><a class="btn mut" href="{{update.url}}" target="_blank" rel="noopener">Xem lịch sử phát hành</a></div>
-    </div>
-    {% elif update.status == 'no_release' %}
-    <div class="card update-state warning">
-      <h2>Repository chưa có Release</h2>
-      <p>{{update.message}}</p>
-      <p class="muted">Sau khi đẩy tag đầu tiên dạng vX.Y.Z, GitHub Actions sẽ tự đóng gói file tar.gz và SHA256.</p>
-      <div class="update-actions"><a class="btn mut" href="{{repository_url}}/releases" target="_blank" rel="noopener">Mở GitHub Releases</a></div>
-    </div>
-    {% else %}
-    <div class="card update-state error">
-      <h2>Chưa kiểm tra được bản mới</h2>
-      <p>{{update.message or 'Không nhận được dữ liệu hợp lệ từ GitHub.'}}</p>
-    </div>
-    {% endif %}
-
-    <div class="card">
-      <h2>Cách nâng cấp an toàn</h2>
-      <p>JXNative chỉ dò và thông báo phiên bản. Web <b>không tự tải, không tự chạy mã và không tự dừng game</b>.</p>
-      <div class="update-safety">Trước khi nâng cấp: tải cả gói <code>.tar.gz</code> và file <code>.sha256</code>, kiểm tra checksum, backup database, sau đó Stop All. File <code>update.sh</code> giữ lại cấu hình, database, server game và MOD của máy hiện tại.</div>
-      <pre class="update-command">cd /opt
-sha256sum -c JXNative-vX.Y.Z.tar.gz.sha256
-sudo tar -xzf JXNative-vX.Y.Z.tar.gz -C /opt
-cd /opt/QuanLy_One
-sudo bash update.sh</pre>
-      <div class="update-actions">
-        <a class="btn" href="{{url_for('update_center', refresh=1)}}">Kiểm tra lại ngay</a>
-        <a class="btn mut" href="{{repository_url}}" target="_blank" rel="noopener">Mã nguồn GitHub</a>
-      </div>
-    </div>
-    """
-    checked = datetime.fromtimestamp(update.get("checked_at", time.time())).astimezone()
-    return page(
-        body,
-        page="update",
-        update=update,
-        repository=UPDATE_REPOSITORY,
-        repository_url=repository_url,
-        checked_time=checked.strftime("%H:%M:%S %d/%m/%Y"),
-    )
+    # Giữ đường dẫn cũ cho bookmark, nhưng toàn bộ cập nhật nay nằm trong popup sidebar.
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/events", methods=["GET", "POST"])

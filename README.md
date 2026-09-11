@@ -74,7 +74,8 @@ Lần đăng nhập đầu tiên bắt buộc:
 1. Đổi mật khẩu Admin.
 2. Đặt mật khẩu riêng cho MySQL và MSSQL hoặc dùng nút tạo tự động.
 3. Chờ thanh tiến trình tải image, khởi tạo database và kiểm tra kết nối đạt
-   100%. Lần đầu có thể mất vài phút, đặc biệt khi tải MSSQL.
+   100%. Lần đầu có thể mất vài phút, đặc biệt khi tải MSSQL. Khung nhật ký
+   ngay bên dưới cho biết từng bước đang làm và lỗi gần nhất nếu chưa hoàn tất.
 
 Không đóng trang trong khi trạng thái là **Đang xử lý**. Server game chưa tự
 chạy sau bước này.
@@ -158,17 +159,19 @@ Không đưa `.env`, database, backup hoặc log lên GitHub.
 Nginx là cổng vào của cả Web quản trị và Website công khai, vì vậy không nên
 gỡ Nginx. Trong **Cấu hình Website** có thể xem thử và áp dụng từng theme:
 
-- **JXNative mới:** hiện đại, responsive.
-- **Thạch Chí cổ điển:** dùng khung và tài nguyên giao diện Võ Lâm cũ.
+- **Thạch Chí cổ điển:** giao diện mặc định khi cài mới, dùng khung và tài
+  nguyên Võ Lâm cũ.
+- **JXNative mới:** hiện đại, responsive; có thể chọn lại trong cấu hình.
 
 Hai theme có HTML/CSS riêng; chỉ dùng chung dữ liệu cần thiết như bài viết,
 ảnh, liên kết tải game và tài khoản.
 
 ## 7. Kiểm tra và nâng cấp phiên bản
 
-Vào **Hệ thống → Cập nhật phiên bản**. JXNative đọc GitHub Release mới nhất và
-thông báo nếu có bản mới. Trình kiểm tra chỉ đọc metadata công khai; không tự
-tải, không chạy mã và không tự dừng server.
+Sau khi đăng nhập, JXNative kiểm tra GitHub Release một lần trong phiên. Kết
+quả nằm ngay dưới số phiên bản ở cuối sidebar. Bấm vào trạng thái này để mở
+popup xem hoặc tải bản phát hành. Trình kiểm tra không tự chạy mã và không tự
+dừng server.
 
 Quy trình nâng cấp an toàn:
 

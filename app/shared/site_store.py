@@ -26,7 +26,7 @@ THEME_CATALOG = {
 THEMES = tuple(THEME_CATALOG)
 SETTING_DEFAULTS = {
     "title": "JX Server",
-    "theme": "modern",
+    "theme": "thachi",
     "tagline": "Võ Lâm Truyền Kỳ",
     "announcement": "Chào mừng bạn đến với máy chủ Võ Lâm.",
     "download_url": "/article/download",
@@ -69,6 +69,9 @@ def initialize():
             );
             """
         )
+        had_settings = bool(
+            connection.execute("SELECT COUNT(*) FROM site_settings").fetchone()[0]
+        )
         for key, value in SETTING_DEFAULTS.items():
             connection.execute(
                 "INSERT OR IGNORE INTO site_settings(key, value) VALUES(?, ?)", (key, value)
@@ -79,9 +82,11 @@ def initialize():
             "SELECT value FROM site_settings WHERE key='theme_renderer_version'"
         ).fetchone()
         if renderer_version is None:
-            connection.execute(
-                "INSERT OR REPLACE INTO site_settings(key,value) VALUES('theme','modern')"
-            )
+            # Máy cũ giữ giao diện đang quen dùng; máy cài mới dùng Thạch Chí.
+            if had_settings:
+                connection.execute(
+                    "INSERT OR REPLACE INTO site_settings(key,value) VALUES('theme','modern')"
+                )
             connection.execute(
                 "INSERT INTO site_settings(key,value) VALUES('theme_renderer_version','2')"
             )
@@ -161,7 +166,7 @@ def get_settings():
     result = dict(SETTING_DEFAULTS)
     result.update(values)
     if result.get("theme") not in THEMES:
-        result["theme"] = "modern"
+        result["theme"] = "thachi"
     return result
 
 

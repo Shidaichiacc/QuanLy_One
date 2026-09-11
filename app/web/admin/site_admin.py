@@ -127,7 +127,7 @@ def register_site_admin(app):
                     update_settings(
                         {
                             "title": request.form.get("title", ""),
-                            "theme": request.form.get("theme", "modern"),
+                            "theme": request.form.get("theme", "thachi"),
                             "tagline": request.form.get("tagline", ""),
                             "announcement": request.form.get("announcement", ""),
                             "download_url": request.form.get("download_url", ""),

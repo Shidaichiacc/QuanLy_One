@@ -92,7 +92,7 @@ def page_context(**extra):
     preview_theme = request.args.get("theme_preview", "")
     theme = preview_theme if preview_theme in THEMES else settings["theme"]
     if theme not in THEMES:
-        theme = "modern"
+        theme = "thachi"
     context = {
         "settings": settings,
         "theme": theme,
@@ -107,8 +107,8 @@ def page_context(**extra):
 
 
 def render_theme(page_name, **context):
-    theme = context.get("theme", "modern")
-    template_dir = THEME_CATALOG.get(theme, THEME_CATALOG["modern"])["template_dir"]
+    theme = context.get("theme", "thachi")
+    template_dir = THEME_CATALOG.get(theme, THEME_CATALOG["thachi"])["template_dir"]
     return render_template(f"themes/{template_dir}/{page_name}.html", **context)
 
 

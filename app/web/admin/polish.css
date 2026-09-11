@@ -274,28 +274,27 @@ tbody tr:hover { background: rgba(201, 164, 95, .045); }
   .console-heading { align-items: start; flex-direction: column; }
 }
 
-/* v1.3.0: public GitHub Release checker. */
-.sidebar-update { display: flex !important; align-items: center; gap: 6px !important; margin: 8px 0 0 !important; padding: 6px 8px !important; border: 1px solid rgba(255,255,255,.1); border-radius: 6px !important; color: #a99d8e !important; font-size: 10px !important; letter-spacing: 0 !important; }
+/* Kiểm tra bản mới một lần mỗi phiên; kết quả nằm dưới số phiên bản. */
+.sidebar-update { display: flex !important; width: 100%; align-items: center; gap: 6px !important; margin: 8px 0 0 !important; padding: 6px 8px !important; border: 1px solid rgba(255,255,255,.1); border-radius: 6px !important; background: transparent !important; color: #a99d8e !important; font-size: 10px !important; font-weight: 600; letter-spacing: 0 !important; text-align: left; }
 .sidebar-update:hover { color: #e8dcc9 !important; background: rgba(255,255,255,.05) !important; }
 .sidebar-update.available { color: #58d6b7 !important; border-color: rgba(42,199,165,.35); background: rgba(42,199,165,.08) !important; }
-.sidebar-update.failed { color: #a99d8e !important; }
+.sidebar-update.checked { border-color: transparent; }
+.sidebar-update.failed { color: #a99d8e !important; border-color: transparent; }
 .sidebar-update-icon { flex: 0 0 auto; font-size: 12px; }
 .sidebar-update-label { overflow: hidden; text-overflow: ellipsis; }
 body.sidebar-collapsed .sidebar-update-label { display: none; }
 body.sidebar-collapsed .sidebar-update { justify-content: center !important; padding: 6px !important; }
-
-.update-overview { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; padding: 0; background: var(--line); }
-.update-overview > div { min-width: 0; padding: 15px 17px; background: var(--card); }
-.update-overview small { display: block; margin-bottom: 5px; color: var(--mut); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.update-overview b { display: block; overflow: hidden; color: #eadbc6; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-.update-state { border-left: 3px solid var(--line); }
-.update-state.available { border-left-color: var(--ok); }
-.update-state.current { border-left-color: var(--acc); }
-.update-state.warning { border-left-color: var(--warn); }
-.update-state.error { border-left-color: var(--err); }
-.update-state h2 { margin-bottom: 7px; }
-.update-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
-.release-notes { max-height: 330px; margin: 14px 0 0; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 13px 15px; background: rgba(0,0,0,.16); color: #cfc2b1; font: 12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; white-space: pre-wrap; }
-.update-safety { margin-top: 14px; padding: 11px 13px; border: 1px solid rgba(232,162,59,.25); border-radius: 8px; background: rgba(232,162,59,.05); color: #c9bca9; font-size: 12px; line-height: 1.55; }
-.update-command { margin: 12px 0 0; overflow: auto; border: 1px solid #332b24; border-radius: 8px; padding: 13px 15px; background: #020405; color: #d8d1c5; font: 12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace; white-space: pre; }
-@media (max-width: 720px) { .update-overview { grid-template-columns: 1fr; } }
+.update-dialog { width: min(470px, calc(100% - 28px)); padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--fg); box-shadow: 0 26px 80px rgba(0,0,0,.58); }
+.update-dialog::backdrop { background: rgba(4,8,12,.75); }
+.update-dialog-head { display: flex; align-items: center; gap: 11px; padding: 15px 17px; border-bottom: 1px solid var(--line); }
+.update-dialog-icon { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border-radius: 50%; background: rgba(42,199,165,.11); color: var(--ok); font-size: 18px; font-weight: 800; }
+.update-dialog-head > div { min-width: 0; flex: 1; }
+.update-dialog-head small { color: var(--mut); font-size: 9px; font-weight: 750; letter-spacing: .08em; }
+.update-dialog-head h2 { margin: 2px 0 0; font-size: 17px; }
+.update-dialog-head .update-dialog-close { padding: 6px 9px; }
+.update-dialog-body { padding: 16px 17px; }
+.update-dialog-body p { margin: 0; line-height: 1.55; }
+.update-dialog-note { margin-top: 12px !important; padding: 9px 11px; border: 1px solid rgba(232,162,59,.24); border-radius: 7px; background: rgba(232,162,59,.05); color: #c9bca9; font-size: 12px; }
+.update-dialog-actions { display: flex; justify-content: flex-end; gap: 7px; flex-wrap: wrap; padding: 12px 17px; border-top: 1px solid var(--line); }
+.update-dialog-actions button,.update-dialog-actions .btn { padding: 7px 11px; font-size: 12px; }
+.update-dialog-actions [hidden] { display: none !important; }
