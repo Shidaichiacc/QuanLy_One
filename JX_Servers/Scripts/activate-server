@@ -1,0 +1,31 @@
+#!/bin/bash
+set -eu
+
+project_root=/opt/QuanLy_One
+server_name=${1:-}
+target="$project_root/JX_Servers/JX_Versions/$server_name"
+active_link="$project_root/JX_Servers/Active"
+
+if [ -z "$server_name" ] || [ ! -d "$target/gateway" ] || [ ! -d "$target/server1" ]; then
+    echo "Usage: $0 <server-name>" >&2
+    echo "Server must contain gateway/ and server1/." >&2
+    exit 2
+fi
+
+for unit in jxgame jxs3relay jxbishop jxgoddess; do
+    if systemctl is-active --quiet "$unit"; then
+        echo "Stop all JX services before changing the active server." >&2
+        exit 3
+    fi
+done
+
+for binary in \
+    "$target/gateway/bishop_y" \
+    "$target/gateway/goddess_y" \
+    "$target/gateway/s3relay/s3relay_y" \
+    "$target/server1/jx_linux_y"; do
+    [ ! -f "$binary" ] || chmod +x "$binary"
+done
+
+ln -sfn "$target" "$active_link"
+echo "Active server: $target"

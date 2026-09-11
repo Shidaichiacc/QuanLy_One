@@ -1,0 +1,94 @@
+#!/bin/bash
+set -eu
+
+project_root=/opt/QuanLy_One
+active_root="$project_root/JX_Servers/Active"
+state_file="$project_root/data/state/server-ip"
+server_ip=${1:-auto}
+
+is_ipv4() {
+    printf '%s' "$1" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+}
+
+is_local_ip() {
+    ip -4 -o addr show 2>/dev/null | awk '{sub(/\/.*/, "", $4); print $4}' | grep -Fxq "$1"
+}
+
+configured_ip() {
+    for config_file in \
+        "$active_root/server1/servercfg.ini" \
+        "$active_root/server1/servercf0.ini" \
+        "$active_root/gateway/goddess.cfg"; do
+        [ -f "$config_file" ] || continue
+        value=$(sed -n -E 's/^[[:space:]]*[Ii]nternet[Ii]p[[:space:]]*=[[:space:]]*([^[:space:];#]+).*/\1/p' "$config_file" | head -n 1)
+        if is_ipv4 "$value" && is_local_ip "$value"; then
+            printf '%s\n' "$value"
+            return 0
+        fi
+    done
+    return 1
+}
+
+detect_ip() {
+    if [ -f "$state_file" ]; then
+        value=$(head -n 1 "$state_file" | tr -d '[:space:]')
+        if is_ipv4 "$value" && is_local_ip "$value"; then
+            printf '%s\n' "$value"
+            return 0
+        fi
+    fi
+    configured_ip && return 0
+    value=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n -E 's/.*[[:space:]]src[[:space:]]+([^[:space:]]+).*/\1/p' | head -n 1)
+    if is_ipv4 "$value" && is_local_ip "$value"; then
+        printf '%s\n' "$value"
+        return 0
+    fi
+    return 1
+}
+
+if [ "$server_ip" = auto ]; then
+    server_ip=$(detect_ip || true)
+fi
+
+if ! is_ipv4 "$server_ip"; then
+    echo "Usage: $0 <IPv4|auto>" >&2
+    exit 2
+fi
+
+if [ ! -d "$active_root/server1" ] || [ ! -d "$active_root/gateway" ]; then
+    echo "No active server." >&2
+    exit 3
+fi
+
+files="
+$active_root/server1/servercfg.ini
+$active_root/server1/servercf0.ini
+$active_root/gateway/goddess.cfg
+$active_root/gateway/bishop.cfg
+$active_root/gateway/s3relay/relay_config.ini
+"
+
+for config_file in $files; do
+    [ -f "$config_file" ] || continue
+    sed -i -E "s/^([[:space:]]*[Ii]nternet[Ii]p[[:space:]]*=[[:space:]]*).*/\1${server_ip}/" "$config_file"
+    echo "Updated: $config_file"
+done
+
+for config_file in \
+    "$active_root/gateway/goddess.cfg" \
+    "$active_root/gateway/bishop.cfg"; do
+    [ -f "$config_file" ] || continue
+    sed -i -E "s/^([[:space:]]*[Ii]ntranet[Ii]p[[:space:]]*=[[:space:]]*).*/\1${server_ip}/" "$config_file"
+done
+
+if [ -f "$active_root/gateway/bishop.cfg" ]; then
+    sed -i -E \
+        -e 's/^([[:space:]]*[Aa]cc[Ss]vr[Ii][Pp][[:space:]]*=[[:space:]]*).*/\1127.0.0.1/' \
+        -e 's/^([[:space:]]*[Rr]ole[Ss]vr[Ii][Pp][[:space:]]*=[[:space:]]*).*/\1127.0.0.1/' \
+        "$active_root/gateway/bishop.cfg"
+fi
+
+mkdir -p "$project_root/data/state"
+printf '%s\n' "$server_ip" >"$state_file.tmp"
+mv "$state_file.tmp" "$state_file"
+echo "Active server IP: $server_ip"

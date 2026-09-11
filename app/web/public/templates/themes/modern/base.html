@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="{{ settings.tagline }}">
+  <title>{% block title %}{{ settings.title }}{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('legacy_assets',theme='thachi',filename='images/vltk.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='site.css') }}">
+</head>
+<body id="top">
+  {% if theme_preview %}<div class="theme-preview-banner">Đang xem thử: {{ theme_meta.label }} · Chưa áp dụng vào website</div>{% endif %}
+  <header class="site-header" id="siteHeader">
+    <nav class="site-wrap site-nav">
+      <a class="site-brand" href="{{ url_for('home') }}"><span class="site-brand-mark">⚔</span><span class="site-brand-copy"><b>{{ settings.title }}</b><small>Võ Lâm Truyền Kỳ</small></span></a>
+      <div class="site-links"><a href="{{ url_for('home') }}">Trang chủ</a><a href="{{ url_for('news',category='news') }}">Tin tức</a><a href="{{ url_for('news',category='event') }}">Sự kiện</a><a href="{{ url_for('news',category='t_nag') }}">Tính năng</a><a href="/content.php?i=huong_dan_nguoi_choi_moi">Cẩm nang</a><a href="{{ settings.download_url }}">Tải game</a></div>
+      <div class="site-auth">{% if game_user %}<a class="btn" href="{{ url_for('account') }}">{{ game_user }}</a>{% else %}<a class="btn" href="{{ url_for('login') }}">Đăng nhập</a><a class="btn btn-gold" href="{{ url_for('register') }}">Đăng ký</a>{% endif %}</div>
+      <button class="btn mobile-nav" type="button" id="mobileNav" aria-label="Mở menu">☰</button>
+    </nav>
+  </header>
+  {% block hero %}{% endblock %}
+  {% if settings.announcement %}<div class="notice"><div class="site-wrap">✦ {{ settings.announcement }}</div></div>{% endif %}
+  <main class="site-main">{% for category,message in get_flashed_messages(with_categories=true) %}<div class="content-shell flash {{ category }}">{{ message }}</div>{% endfor %}{% block content %}{% endblock %}</main>
+  <footer class="site-footer"><div class="site-wrap footer-grid"><div><b>{{ settings.title }}</b><span>{{ settings.tagline }}</span></div><div class="footer-links"><a href="{{ settings.facebook_url or '#' }}">Facebook</a><a href="{{ settings.facebook_group or '#' }}">Cộng đồng</a><a href="/admin/">Quản trị</a><a href="#top">Đầu trang ↑</a></div></div></footer>
+  <script>(function(){const header=document.getElementById('siteHeader'),button=document.getElementById('mobileNav');button?.addEventListener('click',()=>header.classList.toggle('open'))})();</script>
+</body>
+</html>

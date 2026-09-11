@@ -1,0 +1,42 @@
+#!/bin/bash
+set -eu
+
+REQUESTED_INTERFACE=${1:-auto}
+WAIT_SECONDS=${2:-0}
+STARTED_AT=$SECONDS
+
+find_ipv4() {
+    if [ "$REQUESTED_INTERFACE" != "auto" ]; then
+        ip -4 -o addr show dev "$REQUESTED_INTERFACE" scope global 2>/dev/null |
+            awk 'NR == 1 { split($4, address, "/"); print $2, address[1] }'
+        return
+    fi
+
+    ip -4 route get 1.1.1.1 2>/dev/null |
+        awk '{
+            for (i = 1; i <= NF; i++) {
+                if ($i == "dev") iface = $(i + 1)
+                if ($i == "src") address = $(i + 1)
+            }
+            if (iface != "" && address != "") print iface, address
+        }' |
+        head -1
+}
+
+while :; do
+    RESULT=$(find_ipv4)
+    if [ -n "${RESULT:-}" ]; then
+        INTERFACE=${RESULT%% *}
+        IP=${RESULT#* }
+        echo "$INTERFACE is ready with IPv4 address $IP"
+        exit 0
+    fi
+
+    if [ "$WAIT_SECONDS" -gt 0 ] &&
+        [ $((SECONDS - STARTED_AT)) -ge "$WAIT_SECONDS" ]; then
+        echo "Timed out after ${WAIT_SECONDS}s waiting for a routed IPv4 address" >&2
+        exit 1
+    fi
+
+    sleep 2
+done

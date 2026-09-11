@@ -1,0 +1,12 @@
+[Unit]
+Description=JX Web Management Panel
+After=network.target docker.service
+[Service]
+Type=simple
+WorkingDirectory=/opt/QuanLy_One/app/web/admin
+EnvironmentFile=-/opt/QuanLy_One/.env
+ExecStart=/opt/QuanLy_One/app/web/admin/venv/bin/gunicorn --worker-class gthread --workers 1 --threads 12 --timeout 0 --keep-alive 5 --bind 127.0.0.1:8080 --access-logfile - --error-logfile - app:app
+Restart=on-failure
+RestartSec=3
+[Install]
+WantedBy=multi-user.target

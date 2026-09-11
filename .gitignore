@@ -1,0 +1,43 @@
+.env
+.env.*
+!.env.example
+
+# Dữ liệu vận hành và bí mật được tạo trên từng máy.
+data/state/*
+!data/state/.gitkeep
+data/uploads/*
+!data/uploads/.gitkeep
+data/database/mysql/data/*
+!data/database/mysql/data/.gitkeep
+data/database/mssql/data/*
+!data/database/mssql/data/.gitkeep
+data/database/backups/*
+!data/database/backups/.gitkeep
+
+# Server và MOD do quản trị viên đưa lên riêng. Chỉ vdk.so chính thức đi cùng mã nguồn.
+JX_Servers/Active
+JX_Servers/JX_Versions/*
+!JX_Servers/JX_Versions/.gitkeep
+JX_Servers/MOD/*
+!JX_Servers/MOD/.gitkeep
+!JX_Servers/MOD/vdk.so
+
+# Môi trường Python và file sinh tự động.
+app/web/admin/venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.py[cod]
+*.log
+*.pid
+*.tmp
+*.swp
+*.bak
+*.bak.*
+*.user-*
+.DS_Store
+
+# Gói đóng gói cục bộ; file phát hành được tải lên GitHub Releases.
+JXNative-v*.tar.gz
+JXNative-v*.tar.gz.sha256

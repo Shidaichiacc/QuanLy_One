@@ -1,0 +1,12 @@
+[Unit]
+Description=jxpaysys
+After=network.target docker.service
+[Service]
+Type=simple
+WorkingDirectory=/opt/QuanLy_One/JX_Servers/Runtime
+ExecStart=/opt/QuanLy_One/JX_Servers/Runtime/sword3paysys config
+Restart=always
+RestartSec=3
+LogNamespace=jxnative
+[Install]
+WantedBy=multi-user.target

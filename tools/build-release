@@ -1,0 +1,40 @@
+#!/bin/bash
+set -euo pipefail
+
+project_root=$(cd "$(dirname "$0")/.." && pwd)
+project_parent=$(dirname "$project_root")
+project_name=$(basename "$project_root")
+version=$(cat "$project_root/VERSION")
+destination=${1:-/opt/JXNative-v${version}.tar.gz}
+checksum_path="${destination}.sha256"
+
+tar -czf "$destination" \
+    --transform="s#^${project_name}#QuanLy_One#" \
+    --exclude="${project_name}/.git" \
+    --exclude="${project_name}/.env" \
+    --exclude="${project_name}/app/web/admin/venv" \
+    --exclude='*/__pycache__' \
+    --exclude='*.py[cod]' \
+    --exclude="${project_name}/JX_Servers/Active" \
+    --exclude="${project_name}/JX_Servers/JX_Versions/*" \
+    --exclude="${project_name}/JX_Servers/MOD/*.bak*" \
+    --exclude="${project_name}/JX_Servers/MOD/*.user-*" \
+    --exclude="${project_name}/JX_Servers/Runtime/*.bak*" \
+    --exclude="${project_name}/data/state/*" \
+    --exclude="${project_name}/data/uploads/*" \
+    --exclude="${project_name}/data/database/mysql/data/*" \
+    --exclude="${project_name}/data/database/mssql/data/*" \
+    --exclude="${project_name}/data/database/backups/*" \
+    --exclude="${project_name}/app/web/assets/legacy/**/*.php" \
+    --exclude="${project_name}/app/web/assets/legacy/**/*.log" \
+    --exclude="${project_name}/app/web/assets/legacy/**/*.logs" \
+    --exclude="${project_name}/app/web/assets/legacy/**/.htaccess" \
+    -C "$project_parent" "$project_name"
+chmod 0644 "$destination"
+(
+    cd "$(dirname "$destination")"
+    sha256sum "$(basename "$destination")" >"$(basename "$checksum_path")"
+)
+chmod 0644 "$checksum_path"
+echo "$destination"
+echo "$checksum_path"

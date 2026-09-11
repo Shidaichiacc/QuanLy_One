@@ -1,0 +1,15 @@
+[Unit]
+Description=JXNative automatic database backup scheduler
+After=docker.service jx-webpanel.service
+Requires=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/QuanLy_One
+EnvironmentFile=-/opt/QuanLy_One/.env
+ExecStart=/opt/QuanLy_One/app/web/admin/venv/bin/python /opt/QuanLy_One/tools/backup-scheduler
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

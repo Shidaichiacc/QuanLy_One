@@ -1,0 +1,40 @@
+#!/bin/bash
+set -u
+
+exec 9>/run/jx-ensure-running.lock
+flock -n 9 || exit 0
+
+log() {
+    logger -t jx-ensure-running "$*"
+}
+
+start_unit() {
+    local unit=$1
+
+    if systemctl is-active --quiet "$unit"; then
+        return 0
+    fi
+
+    log "Starting inactive unit: $unit"
+    systemctl reset-failed "$unit" 2>/dev/null || true
+    systemctl start "$unit"
+}
+
+start_unit docker.service
+
+for container in jx1_mysql jx1_mssql; do
+    if ! docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null |
+        grep -qx true; then
+        log "Starting inactive container: $container"
+        docker start "$container"
+    fi
+done
+
+start_unit jx-autoip.service
+start_unit jxpaysys.service
+start_unit jxrelaypay.service
+start_unit jxgoddess.service
+start_unit jxbishop.service
+start_unit jxs3relay.service
+start_unit jxgame.service
+start_unit jx-webpanel.service

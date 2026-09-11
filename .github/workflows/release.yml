@@ -1,0 +1,44 @@
+name: Tao goi phat hanh
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Kiem tra tag va VERSION
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(tr -d '\r\n' < VERSION)
+          test "${GITHUB_REF_NAME}" = "v${version}" || {
+            echo "Tag ${GITHUB_REF_NAME} khong khop VERSION=${version}" >&2
+            exit 1
+          }
+
+      - name: Dong goi va tao SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/build-release "${RUNNER_TEMP}/JXNative-${GITHUB_REF_NAME}.tar.gz"
+
+      - name: Tao GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/JXNative-${GITHUB_REF_NAME}.tar.gz"
+          checksum="${archive}.sha256"
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" --title "JXNative ${GITHUB_REF_NAME}" --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" "$archive" "$checksum" --clobber

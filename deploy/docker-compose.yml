@@ -1,0 +1,51 @@
+name: quanly-one
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: quanlyone_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Chưa đặt mật khẩu MySQL trong trình thiết lập}
+    command: --explicit_defaults_for_timestamp=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - ../data/database/mysql/data:/var/lib/mysql
+      - ../data/database/seed/server1.sql:/docker-entrypoint-initdb.d/10-server1.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: quanlyone_mssql
+    restart: unless-stopped
+    user: "0:0"
+    environment:
+      SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Chưa đặt mật khẩu MSSQL trong trình thiết lập}
+      ACCEPT_EULA: "Y"
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - ../data/database/mssql/data:/var/opt/mssql/data
+      - ../data/database/backups:/opt/QuanLy_One/data/database/backups
+      - ../data/database/seed:/opt/QuanLy_One/data/database/seed:ro
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/1433'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"

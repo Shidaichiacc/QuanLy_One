@@ -1,0 +1,34 @@
+#!/bin/bash
+# Chay s3relay_y trong mot PTY de co the nhan exit/y giong jx.sh.
+set -u
+
+BIN=/opt/QuanLy_One/JX_Servers/Active/gateway/s3relay/s3relay_y
+TTY_FILE=/tmp/s3relay_tty
+CLOSE_FILE=/tmp/s3relay_canclose
+PTY_LOG=/tmp/s3relay_pty.log
+
+rm -f "$TTY_FILE" "$CLOSE_FILE"
+while true; do
+    # shell ben trong script ghi lai /dev/pts/* roi exec binary, giu nguyen PID binary.
+    script -q -f -c "sh -c 'tty > $TTY_FILE; exec $BIN'" "$PTY_LOG"
+    ec=$?
+    rm -f "$TTY_FILE"
+
+    # Luong tắt chu dong se tao marker sau khi da gui exit/y va thay binary thoat.
+    if [ -f "$CLOSE_FILE" ]; then
+        rm -f "$CLOSE_FILE"
+        exit 0
+    fi
+
+    # Ket thuc binh thuong nhung khong co marker: cho mot khoang ngan de tranh restart loop.
+    if [ "$ec" -eq 0 ] || [ "$ec" -eq 143 ]; then
+        for _ in $(seq 1 30); do
+            if [ -f "$CLOSE_FILE" ]; then
+                rm -f "$CLOSE_FILE"
+                exit 0
+            fi
+            sleep 1
+        done
+    fi
+    sleep 3
+done

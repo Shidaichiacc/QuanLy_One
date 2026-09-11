@@ -1,0 +1,12 @@
+[Unit]
+Description=jxbishop
+After=network.target jxgoddess.service jxpaysys.service
+[Service]
+Type=simple
+WorkingDirectory=/opt/QuanLy_One/JX_Servers/Active/gateway
+ExecStart=/opt/QuanLy_One/JX_Servers/Active/gateway/bishop_y
+Restart=always
+RestartSec=3
+LogNamespace=jxnative
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""Reload riêng S3Relay + GameServer theo thứ tự an toàn, có trạng thái cho web."""
+import fcntl
+import os
+import shutil
+import socket
+import subprocess
+import termios
+import time
+
+ROOT = "/opt/QuanLy_One"
+STATUS = os.path.join(ROOT, "data", "state", "game-reload.status")
+LOCK = "/run/jxnative-game-reload.lock"
+
+
+def write_status(state, message):
+    os.makedirs(os.path.dirname(STATUS), mode=0o750, exist_ok=True)
+    temporary = STATUS + ".tmp"
+    with open(temporary, "w", encoding="utf-8") as status_file:
+        status_file.write(f"{state}\n{message}\n{int(time.time())}\n")
+    os.replace(temporary, STATUS)
+    print(f"[{time.strftime('%F %T')}] {message}", flush=True)
+
+
+def fail(message):
+    write_status("error", message)
+    raise SystemExit(1)
+
+
+def run_systemctl(*arguments, timeout=120):
+    return subprocess.run(["systemctl", *arguments], capture_output=True, text=True, timeout=timeout)
+
+
+def active(unit):
+    return run_systemctl("is-active", "--quiet", unit, timeout=8).returncode == 0
+
+
+def port_open(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+        connection.settimeout(0.5)
+        return connection.connect_ex(("127.0.0.1", port)) == 0
+
+
+def wait_stopped(unit, timeout):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not active(unit):
+            return True
+        time.sleep(2)
+    return False
+
+
+def wait_ready(unit, port, timeout):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if active(unit) and port_open(port):
+            return True
+        time.sleep(2)
+    return False
+
+
+def s3relay_pid():
+    result = subprocess.run(["pgrep", "-x", "s3relay_y"], capture_output=True, text=True)
+    return result.stdout.splitlines()[0].strip() if result.returncode == 0 and result.stdout.strip() else ""
+
+
+def inject_tty(tty, text):
+    descriptor = os.open(tty, os.O_WRONLY | os.O_NOCTTY)
+    try:
+        for character in text:
+            try:
+                fcntl.ioctl(descriptor, termios.TIOCSTI, character.encode())
+            except PermissionError:
+                subprocess.run(["sysctl", "-w", "dev.tty.legacy_tiocsti=1"], capture_output=True)
+                fcntl.ioctl(descriptor, termios.TIOCSTI, character.encode())
+    finally:
+        os.close(descriptor)
+
+
+def graceful_s3relay_exit():
+    pid = s3relay_pid()
+    if not pid:
+        return
+    tty = ""
+    try:
+        with open("/tmp/s3relay_tty", encoding="ascii") as tty_file:
+            tty = tty_file.read().strip()
+    except OSError:
+        pass
+    if not tty or not os.path.exists(tty):
+        result = subprocess.run(["ps", "-o", "tty=", "-p", pid], capture_output=True, text=True)
+        name = result.stdout.strip()
+        if name and name != "?":
+            tty = "/dev/" + name.removeprefix("/dev/")
+    if not tty or not os.path.exists(tty):
+        fail("Không tìm thấy PTY của S3Relay; chưa Reload để tránh mất dữ liệu.")
+    inject_tty(tty, "exit\n")
+    time.sleep(2)
+    inject_tty(tty, "y\n")
+    deadline = time.monotonic() + 75
+    while s3relay_pid() and time.monotonic() < deadline:
+        time.sleep(2)
+    if s3relay_pid():
+        fail("S3Relay không xác nhận thoát sau 75 giây; đã hủy Reload để tránh ép tắt.")
+    open("/tmp/s3relay_canclose", "a").close()
+
+
+def start_and_wait(unit, port, timeout, label):
+    run_systemctl("reset-failed", unit, timeout=15)
+    result = run_systemctl("start", unit, timeout=30)
+    if result.returncode != 0:
+        fail(f"Không bật được {label}: {(result.stderr or result.stdout).strip()}")
+    if not wait_ready(unit, port, timeout):
+        fail(f"{label} không mở cổng {port} sau {timeout} giây. Hãy xem log {unit}.")
+
+
+def main():
+    try:
+        os.mkdir(LOCK)
+    except FileExistsError:
+        print("Đang có một lần Reload Game khác chạy.", flush=True)
+        raise SystemExit(1)
+    try:
+        if not active("jxs3relay") or not active("jxgame"):
+            fail("S3Relay và GameServer phải đang chạy trước khi Reload.")
+        write_status("starting", "Đang yêu cầu S3Relay lưu dữ liệu và thoát...")
+        graceful_s3relay_exit()
+        result = run_systemctl("stop", "jxs3relay", timeout=90)
+        if result.returncode != 0 or not wait_stopped("jxs3relay", 30):
+            fail("Không dừng hoàn toàn được S3Relay; đã hủy Reload.")
+
+        write_status("starting", "S3Relay đã dừng; đang dừng GameServer để lưu dữ liệu...")
+        result = run_systemctl("stop", "jxgame", timeout=180)
+        if result.returncode != 0 or not wait_stopped("jxgame", 60):
+            fail("GameServer chưa dừng hoàn toàn; chưa bật lại để tránh chạy trùng tiến trình.")
+
+        write_status("starting", "Đang bật lại S3Relay — chờ cổng 5003...")
+        start_and_wait("jxs3relay", 5003, 180, "S3Relay")
+        write_status("starting", "S3Relay đã sẵn sàng; đang bật GameServer — chờ cổng 6666...")
+        start_and_wait("jxgame", 6666, 240, "GameServer")
+        write_status("success", "Reload Game hoàn tất: S3Relay và GameServer đã sẵn sàng.")
+    finally:
+        shutil.rmtree(LOCK, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    main()

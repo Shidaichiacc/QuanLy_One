@@ -1,0 +1,19 @@
+#!/bin/bash
+set -eu
+
+HOST=${1:?missing host}
+PORT=${2:?missing port}
+WAIT_SECONDS=${3:-180}
+NAME=${4:-"$HOST:$PORT"}
+DEADLINE=$((SECONDS + WAIT_SECONDS))
+
+while ((SECONDS < DEADLINE)); do
+    if ss -H -ltn "sport = :$PORT" 2>/dev/null | grep -q .; then
+        echo "$NAME is ready at $HOST:$PORT"
+        exit 0
+    fi
+    sleep 2
+done
+
+echo "Timed out after ${WAIT_SECONDS}s waiting for $NAME at $HOST:$PORT" >&2
+exit 1

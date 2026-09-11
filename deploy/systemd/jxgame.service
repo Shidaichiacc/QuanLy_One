@@ -1,0 +1,12 @@
+[Unit]
+Description=jxgame
+After=network.target jxgoddess.service jxs3relay.service jxbishop.service
+[Service]
+Type=simple
+WorkingDirectory=/opt/QuanLy_One/JX_Servers/Active/server1
+ExecStart=/opt/QuanLy_One/JX_Servers/Runtime/jxgame-wrapper
+Restart=always
+RestartSec=3
+LogNamespace=jxnative
+[Install]
+WantedBy=multi-user.target

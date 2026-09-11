@@ -1,0 +1,5 @@
+{% extends "themes/thachi/base.html" %}
+{% set category_name={'news':'Tin tức','event':'Sự kiện','t_nag':'Tính năng'}.get(article.category,'Tin tức') %}
+{% block title %}{{ article.title }} - {{ settings.title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('legacy_assets',theme='thachi',filename='stylesheet/skin_content.css') }}">{% endblock %}
+{% block legacy_content %}<div class="Content_Page"><div class="top"><a href="{{ url_for('home') }}">Trang chủ</a> <span>›</span> <a href="{{ url_for('news',category=article.category) }}">{{ category_name }}</a> <span>›</span> <strong>{{ article.title }}</strong></div><h1 class="title">{{ article.title }}</h1><div class="content_2"><div class="Facebook"><span class="s_Q">{{ settings.announcement }}</span></div><div class="Content_Main">{{ article_body }}</div></div></div>{% endblock %}

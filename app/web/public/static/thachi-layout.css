@@ -1,0 +1,57 @@
+/* Bổ sung tối thiểu cho bộ giao diện Thạch Chí nguyên bản từ JXNative 1.2.1. */
+html { overflow-x: auto; background: #553b24; }
+body { min-width: 1024px; }
+.Menu_Top { position: relative; z-index: 50; float: left; }
+.Menu_Top ._Ul > li { position: relative; }
+.Menu_Top .menu-primary-link { position: absolute; inset: 0; z-index: 2; display: block; overflow: hidden; text-indent: -9999px; }
+.Menu_Top .li_c1 { position: absolute; top: 59px; left: 0; z-index: 60; margin-top: 0 !important; }
+.Menu_Top .li_c1.menu-offset-news { margin-left: 39px !important; }
+.Menu_Top .li_c1.menu-offset-community { margin-left: -89px !important; }
+.legacy-preview { position: relative; z-index: 100; min-width: 1024px; padding: 7px 20px; background: #d5aa4d; color: #251306; text-align: center; font-size: 12px; font-weight: bold; }
+.legacy-main-frame:after, .Body_Right .content .background:after, .Content_Page:after, .Content_Page .content_2:after { content: ""; display: block; clear: both; }
+.legacy-main-frame { min-height: 596px; }
+.Body_Right .content .background { min-height: 520px; }
+.Body_Right .content { overflow: visible; }
+.Body_Right .footer, .Footer { clear: both; }
+.legacy-notice { box-sizing: border-box; clear: both; width: 1024px; margin: 0 auto 8px; padding: 7px 20px; background: rgba(60,31,12,.78); color: #ffe5a7; font-size: 12px; text-align: center; }
+.legacy-flash { box-sizing: border-box; width: 687px; margin: 8px 29px; padding: 9px 10px; border-radius: 4px; background: #fff0d0; color: #8d220f; font-weight: bold; }
+.legacy-flash.ok { background: #def5e5; color: #18753a; }
+.legacy-flash.err { background: #ffe2df; color: #b42318; }
+.legacy-left-list-top { float: left; margin-top: 4px; margin-left: 16px; }
+.legacy-left-list-bottom { float: left; margin-left: 16px; }
+.Content_Main { box-sizing: border-box; overflow-wrap: anywhere; }
+.Content_Main img, .Content_Main video, .Content_Main iframe { max-width: 100%; height: auto; }
+.Content_Page .Content_Decs { display: block; float: left; width: 549px; overflow: hidden; }
+.Content_Page .top, .Content_Page .title { box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.Content_Page .title { padding: 0 16px; }
+.legacy-news-section { float: left; margin-bottom: 18px; }
+.legacy-event-section { float: left; padding-bottom: 18px; }
+.legacy-news-title { background: url('/legacy-assets/thachi/images/body_content_left_news.png') no-repeat; }
+.legacy-events-title { background: url('/legacy-assets/thachi/images/body_content_left_events.png') no-repeat; }
+.legacy-slider { position: relative; width: 296px; height: 170px; background: url('/legacy-assets/thachi/images/body_content_right_slide.png') no-repeat; }
+.legacy-slide { display: none; position: absolute; top: 5px; left: 5px; width: 286px; height: 160px; }
+.legacy-slide.active { display: block; }
+.legacy-slide img { display: block; width: 286px; height: 160px; }
+.legacy-dots { position: absolute; z-index: 3; top: 7px; right: 8px; }
+.legacy-dots button { width: 16px; height: 16px; margin-left: 3px; padding: 0; border: 0; border-radius: 50%; background: #6a442b; color: #fff; font: bold 9px Arial; cursor: pointer; }
+.legacy-dots button.active { background: #d66b20; }
+.legacy-features-title { float: left; width: 295px; height: 37px; margin: 20px 0 0 1px; background: url('/legacy-assets/thachi/images/body_content_left_features.png') no-repeat; }
+.legacy-features-list { float: left; width: 289px; margin-left: 1px; padding: 8px 0 8px 6px; background: #fbfaf8; }
+.legacy-empty { margin: 8px; color: #8e633e; }
+.legacy-empty-page { padding: 20px; }
+.legacy-pager { width: 303px; min-height: 28px; margin: 0 auto; }
+.Content_Page .Content_n_page .n_num.disabled { opacity: .4; cursor: default; }
+.Content_Page .Content_n_page .n_num.current { background: #f1cca0; font-size: 12px; cursor: default; }
+.legacy-password-icon { background-position: 0 31px !important; }
+.legacy-captcha-input { width: 198px !important; }
+.legacy-register-actions { margin-top: 36px !important; }
+#SkinAcc .legacy-login-action { width: 160px; text-align: center; text-decoration: none; background-image: linear-gradient(#bfdfea,#7bb1c5); }
+#SkinAcc .legacy-register-action { width: 327px; }
+.legacy-server-message { height: 52px; margin-top: 25px; padding: 10px; border-radius: 6px; background: #f7f7f7; }
+.legacy-server-message span { display: block; border-bottom: 1px solid #b1b1b1; color: #545454; }
+.legacy-server-message small { font-size: 12px; }
+.legacy-account-center { text-align: center; }
+.legacy-account-center h2 { color: #8d351d; }
+.Footer { margin-top: 60px; }
+.legacy-footer-inner { height: 83px; margin: 35px 0 0; border-top: 2px solid #a47c5a; background: #866f5b; }
+.Footer .Footer_gotop { display: block; margin-top: -2px; text-align: center; font-size: 11px; font-weight: bold; }

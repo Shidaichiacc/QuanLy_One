@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="{{ settings.tagline }}">
+  <title>{% block title %}{{ settings.title }}{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('legacy_assets', theme='thachi', filename='images/vltk.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('legacy_assets', theme='thachi', filename='stylesheet/skin_css.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='thachi-layout.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% if theme_preview %}<div class="legacy-preview">Đang xem thử: {{ theme_meta.label }} · Chưa áp dụng vào website</div>{% endif %}
+  <div id="TOP" class="Frame_All">
+    <div class="Menu_Top">
+      <ul class="_Ul">
+        <li class="li_1"><a class="menu-primary-link" href="{{ url_for('news') }}">Tin tức sự kiện</a><ul class="li_c1 menu-offset-news"><a href="{{ url_for('home') }}"><li>Trang chủ</li></a><a href="{{ url_for('news', category='news') }}"><li>Tin tức</li></a><a href="{{ url_for('news', category='event') }}"><li>Sự kiện</li></a><a href="{{ url_for('news', category='t_nag') }}"><li>Tính năng</li></a></ul></li>
+        <li class="li_2"><a class="menu-primary-link" href="/content.php?i=gioi_thieu_may_chu">Giới thiệu trò chơi</a><ul class="li_c1"><a href="/content.php?i=gioi_thieu_may_chu"><li>Giới thiệu máy chủ</li></a><a href="/content.php?i=huong_dan_nguoi_choi_moi"><li>Giao diện trò chơi</li></a><a href="/content.php?i=he_thong_phim_tat"><li>Hệ thống phím tắt</li></a></ul></li>
+        <li class="li_3"><a class="menu-primary-link" href="/content.php?i=huong_dan_nguoi_choi_moi">Hướng dẫn cơ bản</a><ul class="li_c1"><a href="/content.php?i=doi_mang_hinh_sang_16bit"><li>Đổi màn hình 16bit</li></a><a href="/content.php?i=nhiem_vu_tan_thu"><li>Nhiệm vụ tân thủ</li></a><a href="/content.php?i=download"><li>Hướng dẫn tải game</li></a><a href="/content.php?i=khoi_dong_auto_train"><li>Khởi động Auto</li></a></ul></li>
+        <li class="li_4"><a class="menu-primary-link" href="/content.php?i=nhiem_vu_tan_thu">Nhiệm vụ Võ Lâm</a><ul class="li_c1"><a href="/content.php?i=nhiem_vu_tan_thu"><li>Nhiệm vụ tân thủ</li></a></ul></li>
+        <li class="li_5"><a class="menu-primary-link" href="/content.php?i=thieu_lam_phai">Thập đại môn phái</a><ul class="li_c1"><a href="/content.php?i=thieu_lam_phai"><li>Thiếu Lâm phái</li></a><a href="/content.php?i=thien_vuong_bang"><li>Thiên Vương bang</li></a><a href="/content.php?i=duong_mon_phai"><li>Đường Môn phái</li></a><a href="/content.php?i=ngu_doc_giao"><li>Ngũ Độc giáo</li></a><a href="/content.php?i=nga_my_phai"><li>Nga My phái</li></a><a href="/content.php?i=thuy_yen_phai"><li>Thúy Yên môn</li></a><a href="/content.php?i=cai_bang_phai"><li>Cái Bang phái</li></a><a href="/content.php?i=thien_nhan_giao"><li>Thiên Nhẫn giáo</li></a><a href="/content.php?i=vo_dang_phai"><li>Võ Đang phái</li></a><a href="/content.php?i=con_lon_phai"><li>Côn Lôn giáo</li></a></ul></li>
+        <a href="{{ settings.download_url }}"><li class="li_6"></li></a>
+        <li class="li_7"><a class="menu-primary-link" href="/content.php?i=huong_dan_nguoi_choi_moi">Chinh phục Võ Lâm</a><ul class="li_c1"><a href="/content.php?i=huong_dan_nguoi_choi_moi"><li>Giao diện trò chơi</li></a><a href="/content.php?i=he_thong_phim_tat"><li>Hệ thống phím tắt</li></a><a href="/content.php?i=giftcode"><li>Thưởng Code Tân thủ</li></a></ul></li>
+        <li class="li_8"><a class="menu-primary-link" href="{{ url_for('news', category='t_nag') }}">Tính năng trò chơi</a><ul class="li_c1"><a href="/content.php?i=nhiem_vu_tan_thu"><li>Nhiệm vụ tân thủ</li></a><a href="/content.php?i=cong_thanh_chien_3_tru"><li>Công thành chiến</li></a><a href="/content.php?i=hoa_son_dai_chien"><li>Hoa sơn đại chiến</li></a><a href="/content.php?i=boss_hoang_kim"><li>Boss Hoàng kim</li></a><a href="/content.php?i=thuong_online"><li>Nhận thưởng Online</li></a></ul></li>
+        <li class="li_9"><a class="menu-primary-link" href="{{ settings.download_url }}">Thư viện download</a><ul class="li_c1"><a href="{{ settings.download_url }}"><li>Hướng dẫn tải game</li></a></ul></li>
+        <li class="li_10"><a class="menu-primary-link" href="{{ settings.facebook_url or '/admin/' }}">Hỗ trợ khách hàng</a><ul class="li_c1"><a href="{{ settings.facebook_url or '/admin/' }}" target="_blank" rel="noopener"><li>Liên hệ Facebook</li></a><a href="/admin/"><li>Quản trị website</li></a></ul></li>
+        <li class="li_11"><a class="menu-primary-link" href="{{ settings.facebook_group or settings.facebook_url or '/' }}">Cộng đồng giao lưu</a><ul class="li_c1 menu-offset-community"><a href="{{ settings.facebook_url or '/' }}" target="_blank" rel="noopener"><li>Tham gia Fanpage</li></a><a href="{{ settings.facebook_group or settings.facebook_url or '/' }}" target="_blank" rel="noopener"><li>Tham gia Group</li></a></ul></li>
+      </ul>
+    </div>
+    <div class="blank_top"></div>
+  </div>
+  {% if settings.announcement %}<div class="legacy-notice">{{ settings.announcement }}</div>{% endif %}
+  <div class="Frame_All legacy-main-frame">
+    <div class="Body_Left">
+      <div class="top"><a class="dowload" href="{{ settings.download_url }}" aria-label="Tải game"></a><a class="register" href="{{ url_for('register') }}" aria-label="Đăng ký"></a><a class="pay" href="{{ url_for('account') }}" aria-label="Tài khoản"></a></div>
+      <div class="bottom">
+        <div class="search"><div class="btn_find"></div></div>
+        <img src="{{ url_for('legacy_assets', theme='thachi', filename='images/body_left_list_top.png') }}" class="legacy-left-list-top" alt="">
+        <a class="item_1" href="{{ url_for('home') }}">Trang chủ</a><a class="item_1" href="{{ url_for('login') }}">Đăng nhập</a><a class="item_1" href="{{ url_for('news', category='news') }}">Tin tức mới nhất</a><a class="item_1" href="{{ url_for('news', category='event') }}">Sự kiện đang diễn ra</a><a class="item_1" href="{{ url_for('news', category='t_nag') }}">Tính năng trò chơi</a><a class="item_1" href="/content.php?i=huong_dan_nguoi_choi_moi">Hướng dẫn cơ bản</a><a class="item_1" href="{{ settings.download_url }}">Cài đặt trò chơi</a><a class="item_1" href="/content.php?i=nhiem_vu_tan_thu">Nhiệm vụ võ lâm</a><a class="item_1" href="/content.php?i=he_thong_phim_tat">Hệ thống phím tắt</a><a class="item_1" href="{{ settings.facebook_url or '#' }}" target="_blank" rel="noopener">Liên hệ Facebook</a>
+        <img src="{{ url_for('legacy_assets', theme='thachi', filename='images/body_left_list_bottom.png') }}" class="legacy-left-list-bottom" alt="">
+      </div>
+    </div>
+    <div class="Body_Right">
+      <div class="top_1">{% block right_top %}{% endblock %}</div>
+      <div class="content"><div class="background">
+        {% for category,message in get_flashed_messages(with_categories=true) %}<div class="legacy-flash {{ category }}">{{ message }}</div>{% endfor %}
+        {% block legacy_content %}{% endblock %}
+      </div></div><div class="footer"></div>
+    </div>
+  </div>
+  <div class="Footer"><p class="legacy-footer-inner"><a href="#TOP" class="Footer_gotop">Đầu trang</a><span class="a_desc">© {{ settings.title }}</span></p></div>
+</body>
+</html>

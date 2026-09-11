@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""Khởi chạy jx_linux_y với MOD trong phiên bản hoặc kho MOD dùng chung."""
+import json
+import os
+import re
+from pathlib import Path
+
+
+ROOT = Path("/opt/QuanLy_One")
+JX_ROOT = ROOT / "JX_Servers"
+VERSIONS_ROOT = JX_ROOT / "JX_Versions"
+ACTIVE_ROOT = JX_ROOT / "Active"
+SERVER_ROOT = Path(os.environ.get("JX_SERVER_ROOT", str(ACTIVE_ROOT / "server1")))
+SHARED_MOD_ROOT = Path(os.environ.get("JX_SHARED_MOD_ROOT", str(JX_ROOT / "MOD")))
+STATE_ROOT = ROOT / "data" / "state" / "mods"
+SAFE_LIBRARY = re.compile(r"(?:[A-Za-z0-9_.-]+/)?[A-Za-z0-9_.-]+\.so\Z")
+
+
+def active_version_name():
+    try:
+        relative = ACTIVE_ROOT.resolve(strict=True).relative_to(VERSIONS_ROOT.resolve(strict=True))
+        return relative.parts[0]
+    except (OSError, ValueError, IndexError):
+        return "no-active-server"
+
+
+def available_libraries(root, recursive=False):
+    result = []
+    try:
+        root = root.resolve(strict=True)
+    except OSError:
+        return result
+    candidates = list(root.glob("*.so"))
+    if recursive:
+        candidates.extend(root.glob("*/*.so"))
+    for path in sorted(candidates, key=lambda item: str(item).lower()):
+        try:
+            relative = path.relative_to(root).as_posix()
+            path.resolve(strict=True).relative_to(root)
+            if not SAFE_LIBRARY.fullmatch(relative) or path.is_symlink() or not path.is_file():
+                continue
+            with path.open("rb") as library_file:
+                if library_file.read(5) == b"\x7fELF\x01":
+                    result.append(relative)
+        except (OSError, ValueError):
+            continue
+    return result
+
+
+def companion_for(selected, libraries):
+    parent = os.path.dirname(selected)
+    local = (parent + "/" if parent else "") + "special_drop_hook.so"
+    if local in libraries:
+        return local
+    return "special_drop_hook.so" if "special_drop_hook.so" in libraries else ""
+
+
+state_path = Path(os.environ.get("JX_MOD_STATE_PATH", str(STATE_ROOT / (active_version_name() + ".json"))))
+legacy_state_path = ROOT / "data" / "state" / "game-mod.json"
+state = {}
+for candidate_path in (state_path, legacy_state_path):
+    try:
+        candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+        if isinstance(candidate, dict):
+            state = candidate
+            break
+    except (OSError, ValueError):
+        continue
+
+source = state.get("source", "version")
+if source not in ("version", "shared"):
+    source = "version"
+library_root = SERVER_ROOT if source == "version" else SHARED_MOD_ROOT
+libraries = available_libraries(library_root, recursive=source == "shared")
+cores = [name for name in libraries if os.path.basename(name) != "special_drop_hook.so"]
+selected = state.get("core_library", "")
+if selected not in cores:
+    selected = "vdk.so" if "vdk.so" in cores else (cores[0] if len(cores) == 1 else "")
+companion = companion_for(selected, libraries) if selected else ""
+enabled = bool(state.get("enabled", bool(selected)))
+hook_enabled = bool(state.get("hook_enabled", bool(companion)))
+
+preload = []
+if enabled and selected:
+    preload.append(str(library_root / selected))
+    if hook_enabled and companion:
+        preload.append(str(library_root / companion))
+if preload:
+    inherited = os.environ.get("LD_PRELOAD", "")
+    os.environ["LD_PRELOAD"] = ":".join(preload + ([inherited] if inherited else []))
+else:
+    os.environ.pop("LD_PRELOAD", None)
+
+binary = SERVER_ROOT / "jx_linux_y"
+os.chdir(SERVER_ROOT)
+os.execv(binary, [str(binary)])

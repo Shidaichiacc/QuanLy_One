@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+import sys
+import time
+
+sys.path.insert(0, "/opt/QuanLy_One/app/web/admin")
+import app
+
+while True:
+    try:
+        app._queue_due_backup_jobs()
+    except Exception as exc:
+        print(f"[backup-scheduler] {exc}", flush=True)
+    time.sleep(20)

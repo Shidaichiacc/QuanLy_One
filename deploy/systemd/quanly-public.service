@@ -1,0 +1,18 @@
+[Unit]
+Description=JXNative Public Website
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/QuanLy_One/app/web/public
+EnvironmentFile=-/opt/QuanLy_One/.env
+ExecStart=/opt/QuanLy_One/app/web/admin/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 --access-logfile - --error-logfile - app:app
+Restart=on-failure
+RestartSec=3
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

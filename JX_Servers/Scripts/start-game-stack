@@ -1,0 +1,127 @@
+#!/bin/bash
+set -u
+
+project_root=/opt/QuanLy_One
+status_file="$project_root/data/state/game-start.status"
+log_file="$project_root/data/state/game-start.log"
+lock_dir=/run/jxnative-game-start.lock
+
+write_status() {
+    mkdir -p "$project_root/data/state"
+    printf '%s\n%s\n%s\n' "$1" "$2" "$(date +%s)" >"$status_file.tmp"
+    mv "$status_file.tmp" "$status_file"
+}
+
+fail() {
+    write_status error "$1"
+    printf '[LOI] %s\n' "$1" >&2
+    exit 1
+}
+
+if ! mkdir "$lock_dir" 2>/dev/null; then
+    fail "Đang có một lượt khởi động khác. Hãy chờ tiến trình hiện tại hoàn tất."
+fi
+trap 'rmdir "$lock_dir" 2>/dev/null || true' EXIT
+
+exec >>"$log_file" 2>&1
+printf '\n[%s] Bat dau khoi dong JXNative\n' "$(date '+%F %T')"
+
+active="$project_root/JX_Servers/Active"
+required_bins=(
+    "gateway/goddess_y"
+    "gateway/bishop_y"
+    "gateway/s3relay/s3relay_y"
+    "server1/jx_linux_y"
+)
+
+if [ ! -L "$active" ] || [ ! -d "$active/gateway" ] || [ ! -d "$active/server1" ]; then
+    fail "Chưa kích hoạt phiên bản server hợp lệ. Vào Server & Dữ liệu > Phiên bản & IP, chọn đường dẫn rồi bấm Kích hoạt."
+fi
+for relative in "${required_bins[@]}"; do
+    [ -f "$active/$relative" ] || fail "Phiên bản đang chọn thiếu file $relative."
+    chmod +x "$active/$relative" 2>/dev/null || true
+done
+
+# Mỗi lần Start All đều áp dụng lại IP đang chọn cho phiên bản active.
+# Việc này tránh server mới kích hoạt còn giữ IP từ máy/phiên bản cũ.
+if ! bash "$project_root/JX_Servers/Scripts/update-server-ip" auto; then
+    fail "Không tự cập nhật được IP cho server đang sử dụng. Hãy vào Server & Dữ liệu > Phiên bản & IP để chọn IP."
+fi
+
+if ! ldconfig -p 2>/dev/null | grep -q 'libsybdb\.so\.5'; then
+    fail "Máy thiếu libsybdb.so.5 cho PaySys/Relay. Hãy chạy sudo apt install libsybdb5 hoặc chạy lại update.sh."
+fi
+if [ ! -x /lib/ld-linux.so.2 ]; then
+    fail "Máy thiếu runtime Linux 32-bit cho Goddess/Bishop/S3Relay/GameServer. Hãy chạy lại update.sh."
+fi
+missing_32bit=()
+for library in libc.so.6 libstdc++.so.6 libgcc_s.so.1 libuuid.so.1; do
+    if ! ldconfig -p 2>/dev/null | grep "$library" | grep -q 'i386-linux-gnu'; then
+        missing_32bit+=("$library")
+    fi
+done
+if [ "${#missing_32bit[@]}" -gt 0 ]; then
+    fail "Máy thiếu thư viện 32-bit: ${missing_32bit[*]}. Hãy chạy lại update.sh."
+fi
+
+port_open() {
+    ss -H -ltn "sport = :$1" 2>/dev/null | grep -q .
+}
+
+wait_port() {
+    unit=$1
+    port=$2
+    timeout=$3
+    label=$4
+    deadline=$((SECONDS + timeout))
+    while ((SECONDS < deadline)); do
+        if systemctl is-active --quiet "$unit" && port_open "$port"; then
+            return 0
+        fi
+        sleep 2
+    done
+    last_log=$(journalctl '--namespace=*' --merge -u "$unit" -n 40 -o cat --no-pager 2>/dev/null \
+        | grep -Ev '^(Started|Starting|Stopped|Stopping)|Scheduled restart job|Main process exited|Failed with result' \
+        | tail -n 1 | tr '\n' ' ' | cut -c1-220)
+    fail "$label không mở được cổng $port sau ${timeout}s. ${last_log:-Hãy bấm Xem log của $unit.}"
+}
+
+wait_database() {
+    port=$1
+    timeout=$2
+    label=$3
+    deadline=$((SECONDS + timeout))
+    while ((SECONDS < deadline)); do
+        port_open "$port" && return 0
+        sleep 2
+    done
+    fail "$label chưa sẵn sàng ở cổng $port. Hãy kiểm tra Docker và database."
+}
+
+start_step() {
+    unit=$1
+    port=$2
+    timeout=$3
+    label=$4
+    step=$5
+    write_status starting "Bước $step/6 — đang khởi động $label, chờ cổng $port..."
+    systemctl reset-failed "$unit" >/dev/null 2>&1 || true
+    systemctl start "$unit" || fail "Không thể khởi động $label ($unit). Hãy bấm Xem log."
+    wait_port "$unit" "$port" "$timeout" "$label"
+    printf '[OK] %s mo cong %s\n' "$label" "$port"
+}
+
+write_status starting "Đang kiểm tra MSSQL và MySQL..."
+wait_database 1433 90 MSSQL
+wait_database 3306 90 MySQL
+
+# Đúng thứ tự phụ thuộc của server JX; mỗi bước chỉ chạy khi bước trước đã mở cổng.
+start_step jxpaysys 5002 120 PaySys 1
+start_step jxrelaypay 7777 120 RelayPay 2
+start_step jxgoddess 5001 120 Goddess 3
+start_step jxbishop 5622 120 Bishop 4
+start_step jxs3relay 5003 180 S3Relay 5
+start_step jxgame 6666 240 GameServer 6
+
+write_status success "JXNative đã khởi động đủ 6 thành phần và sẵn sàng vào game."
+printf '[%s] Khoi dong hoan tat\n' "$(date '+%F %T')"
