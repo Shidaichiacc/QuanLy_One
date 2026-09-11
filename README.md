@@ -16,6 +16,7 @@ Mã nguồn và bản phát hành: <https://github.com/Shidaichiacc/QuanLy_One>
 - Ubuntu Server 24.04 LTS x86_64 được khuyến nghị; Ubuntu 22.04 vẫn được hỗ trợ.
 - RAM tối thiểu 4 GB, khuyến nghị 8 GB trở lên khi chạy MSSQL và game.
 - Ổ trống tối thiểu 20 GB, tài khoản có quyền `sudo` và kết nối Internet.
+- Không cần cài Docker trước; `install.sh` sẽ tự cài Docker và Docker Compose.
 
 Tải ISO từ trang chính thức:
 
@@ -30,9 +31,21 @@ sudo apt update
 sudo apt upgrade -y
 ```
 
-### Tải JXNative từ GitHub Release
+### Cách khuyến nghị: cài bộ quản lý bằng Git
 
-Ví dụ cài bản v1.3.0:
+Các lệnh dưới đây chỉ cài **QuanLy_One**. Server game sẽ được upload hoặc clone
+riêng trên Web sau khi hoàn tất thiết lập database.
+
+```bash
+sudo apt update
+sudo apt install -y git
+cd /opt
+sudo git clone --depth 1 https://github.com/Shidaichiacc/QuanLy_One.git
+cd QuanLy_One
+sudo bash install.sh
+```
+
+### Cách dự phòng: tải GitHub Release
 
 ```bash
 cd /opt
@@ -43,9 +56,6 @@ sudo tar -xzf JXNative-v1.3.0.tar.gz -C /opt
 cd /opt/QuanLy_One
 sudo bash install.sh
 ```
-
-Nếu Release chưa được tạo, tải mã nguồn từ nút **Code → Download ZIP**, giải
-nén thành `/opt/QuanLy_One`, rồi chạy `sudo bash install.sh`.
 
 Bộ cài tự cài Docker, Docker Compose, Nginx, Python và thư viện 32-bit cần cho
 JX. Cuối quá trình, bộ cài tự nhận IPv4 LAN của máy và in đúng hai địa chỉ:
