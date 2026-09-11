@@ -208,6 +208,12 @@ def _initial_database_worker(app, mysql_password, mssql_password):
         try:
             _write_database_job("initial", "working", 5, "Kiểm tra cấu hình",
                                 "Đã kiểm tra định dạng hai mật khẩu")
+            mssql_seed = PROJECT_ROOT / "data" / "database" / "seed" / "account_tong.bak"
+            if not mssql_seed.is_file() or mssql_seed.stat().st_size == 0:
+                raise RuntimeError(
+                    "Thiếu data/database/seed/account_tong.bak; bản tải từ GitHub chưa đầy đủ. "
+                    "Hãy cập nhật QuanLy_One rồi bấm Thử lại thiết lập."
+                )
             validate_database_password(mysql_password, "Mật khẩu MySQL")
             validate_database_password(mssql_password, "Mật khẩu MSSQL")
             if mysql_password == mssql_password:

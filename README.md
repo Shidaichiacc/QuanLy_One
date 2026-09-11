@@ -3,7 +3,7 @@
 Web quản trị JX trên Ubuntu: quản lý nhiều phiên bản server, Start/Stop/Reload,
 Console realtime, MySQL, MSSQL, backup/restore, MOD và Website công khai.
 
-Phiên bản ổn định hiện tại: **v1.3.0**  
+Phiên bản ổn định hiện tại: **v1.3.1**
 Mã nguồn và bản phát hành: <https://github.com/Shidaichiacc/QuanLy_One>
 
 > Gói JXNative không chứa server game. Sau khi cài Web và database, hãy đưa
@@ -49,10 +49,10 @@ sudo bash install.sh
 
 ```bash
 cd /opt
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.0/JXNative-v1.3.0.tar.gz
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.0/JXNative-v1.3.0.tar.gz.sha256
-sudo sha256sum -c JXNative-v1.3.0.tar.gz.sha256
-sudo tar -xzf JXNative-v1.3.0.tar.gz -C /opt
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.1/JXNative-v1.3.1.tar.gz
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.1/JXNative-v1.3.1.tar.gz.sha256
+sudo sha256sum -c JXNative-v1.3.1.tar.gz.sha256
+sudo tar -xzf JXNative-v1.3.1.tar.gz -C /opt
 cd /opt/QuanLy_One
 sudo bash install.sh
 ```
@@ -211,12 +211,12 @@ Workflow `.github/workflows/release.yml` tự kiểm tra `VERSION`, đóng gói 
 cd /duong-dan/QuanLy_One
 git init
 git add .
-git commit -m "Release v1.3.0"
+git commit -m "Release v1.3.1"
 git branch -M main
 git remote add origin https://github.com/Shidaichiacc/QuanLy_One.git
 git push -u origin main
-git tag v1.3.0
-git push origin v1.3.0
+git tag v1.3.1
+git push origin v1.3.1
 ```
 
 Tag phải đúng bằng chữ `v` cộng nội dung file `VERSION`. Không commit server

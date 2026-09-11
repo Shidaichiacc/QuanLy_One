@@ -12,6 +12,11 @@ if not password:
 database = os.environ.get("MSSQL_DATABASE", "account_tong")
 backup = Path("/opt/QuanLy_One/data/database/seed/account_tong.bak")
 sql_backup = "/opt/QuanLy_One/data/database/seed/account_tong.bak"
+if not backup.is_file() or backup.stat().st_size == 0:
+    raise SystemExit(
+        "Thiếu data/database/seed/account_tong.bak; gói cài đặt không đầy đủ. "
+        "Hãy cập nhật QuanLy_One rồi thử lại thiết lập database."
+    )
 
 connection = None
 for attempt in range(60):
@@ -35,7 +40,7 @@ with connection:
     cursor = connection.cursor()
     cursor.execute("SELECT DB_ID(%s)", (database,))
     exists = cursor.fetchone()[0] is not None
-    if not exists and backup.is_file():
+    if not exists:
         safe_database = database.replace("]", "]]" )
         safe_path = sql_backup.replace("'", "''")
         cursor.execute("RESTORE FILELISTONLY FROM DISK=N'%s'" % safe_path)
@@ -61,5 +66,3 @@ with connection:
         print("Restored MSSQL database:", database)
     elif exists:
         print("MSSQL database already exists:", database)
-    else:
-        print("MSSQL backup not found; skipped restore:", backup)

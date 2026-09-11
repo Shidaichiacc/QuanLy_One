@@ -38,6 +38,9 @@ __pycache__/
 *.user-*
 .DS_Store
 
+# Backup mẫu bắt buộc để khởi tạo MSSQL khi cài mới bằng git clone.
+!data/database/seed/account_tong.bak
+
 # Gói đóng gói cục bộ; file phát hành được tải lên GitHub Releases.
 JXNative-v*.tar.gz
 JXNative-v*.tar.gz.sha256

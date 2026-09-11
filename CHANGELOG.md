@@ -1,5 +1,10 @@
 # Lịch sử phiên bản
 
+## v1.3.1
+
+- Sửa bản cài bằng `git clone` thiếu `data/database/seed/account_tong.bak` do quy tắc bỏ qua `*.bak`, khiến thiết lập MSSQL đứng ở 76% và báo `Login failed ... account_tong` (State 38).
+- Đưa backup mẫu MSSQL vào Git và kiểm tra file ngay đầu quy trình; nếu gói cài không đầy đủ, Web báo lỗi rõ ràng thay vì chờ database không tồn tại.
+
 ## v1.3.0
 
 - Phát hành ổn định giao diện quản trị polish, Console realtime theo từng tiến trình, nhật ký thao tác, tài nguyên CPU/RAM riêng và quản lý log theo yêu cầu.
