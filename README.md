@@ -132,11 +132,17 @@ Kho MOD dùng chung nằm tại:
 ```
 
 Bản phát hành có sẵn `vdk.so` trực tiếp trong thư mục này. Web không tạo thư
-mục Defaults. Có thể thêm file ELF 32-bit `.so` khác rồi chọn **Kho MOD** ở
-Bảng điều khiển; mỗi phiên bản server lưu lựa chọn MOD riêng.
+mục Defaults. Trong **Bảng điều khiển → Cấu hình MOD**, có thể tạo danh sách
+tối đa 32 file `.so` và thay đổi thứ tự nạp bằng nút lên/xuống. Mỗi mục có thể
+lấy từ **Trong phiên bản active** (`server1/`) hoặc **Kho MOD dùng chung**, nên
+một danh sách có thể kết hợp file từ cả hai nguồn.
 
-Nguồn **Trong phiên bản** chỉ hiện `.so` thuộc `server1/` của server active.
-Nguồn **Kho MOD** chỉ hiện `.so` trong kho dùng chung, hai danh sách không trộn.
+Ô thêm MOD cho phép chọn file đã quét hoặc nhập đúng tên file rồi bấm **Thêm**.
+QuanLy One chỉ nhận file ELF 32-bit thực sự tồn tại trong nguồn đã chọn và
+không cho thêm trùng. Thứ tự hiển thị cũng là thứ tự trong `LD_PRELOAD`.
+Nếu GameServer đang chạy, lưu thay đổi sẽ yêu cầu xác nhận rồi Reload an toàn
+S3Relay + GameServer; nếu đang tắt, cấu hình áp dụng ở lần Start All kế tiếp.
+Cấu hình một MOD của bản cũ được tự chuyển sang danh sách mới khi lưu.
 
 ## 5. Database, backup và mật khẩu
 

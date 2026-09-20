@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 
@@ -14,6 +15,7 @@ SERVER_ROOT = Path(os.environ.get("JX_SERVER_ROOT", str(ACTIVE_ROOT / "server1")
 SHARED_MOD_ROOT = Path(os.environ.get("JX_SHARED_MOD_ROOT", str(JX_ROOT / "MOD")))
 STATE_ROOT = ROOT / "data" / "state" / "mods"
 SAFE_LIBRARY = re.compile(r"(?:[A-Za-z0-9_.-]+/)?[A-Za-z0-9_.-]+\.so\Z")
+MAX_LIBRARIES = 32
 
 
 def active_version_name():
@@ -67,24 +69,61 @@ for candidate_path in (state_path, legacy_state_path):
     except (OSError, ValueError):
         continue
 
-source = state.get("source", "version")
-if source not in ("version", "shared"):
-    source = "version"
-library_root = SERVER_ROOT if source == "version" else SHARED_MOD_ROOT
-libraries = available_libraries(library_root, recursive=source == "shared")
-cores = [name for name in libraries if os.path.basename(name) != "special_drop_hook.so"]
-selected = state.get("core_library", "")
-if selected not in cores:
-    selected = "vdk.so" if "vdk.so" in cores else (cores[0] if len(cores) == 1 else "")
-companion = companion_for(selected, libraries) if selected else ""
-enabled = bool(state.get("enabled", bool(selected)))
-hook_enabled = bool(state.get("hook_enabled", bool(companion)))
+roots = {"version": SERVER_ROOT, "shared": SHARED_MOD_ROOT}
+available = {
+    "version": available_libraries(SERVER_ROOT),
+    "shared": available_libraries(SHARED_MOD_ROOT, recursive=True),
+}
 
-preload = []
-if enabled and selected:
-    preload.append(str(library_root / selected))
-    if hook_enabled and companion:
-        preload.append(str(library_root / companion))
+
+def configuration_error(message):
+    print("[MOD] Cau hinh LD_PRELOAD khong hop le: " + message, file=sys.stderr, flush=True)
+    raise SystemExit(78)
+
+
+def configured_entries():
+    """Đọc schema danh sách mới; vẫn hiểu cấu hình một MOD của các bản cũ."""
+    raw_entries = state.get("libraries")
+    if isinstance(raw_entries, list):
+        if len(raw_entries) > MAX_LIBRARIES:
+            configuration_error(f"toi da {MAX_LIBRARIES} file .so")
+        result = []
+        seen = set()
+        for item in raw_entries:
+            if not isinstance(item, dict):
+                configuration_error("danh sach co muc khong hop le")
+            source = item.get("source", "")
+            name = item.get("name", "")
+            key = (source, name)
+            if source not in roots or name not in available[source]:
+                configuration_error(f"khong tim thay {source}:{name}")
+            if key in seen:
+                configuration_error(f"file bi trung {source}:{name}")
+            seen.add(key)
+            result.append({"source": source, "name": name})
+        return result
+
+    # Tương thích cấu hình cũ: core_library + special_drop_hook.so.
+    source = state.get("source", "version")
+    if source not in roots:
+        source = "version"
+    libraries = available[source]
+    cores = [name for name in libraries if os.path.basename(name) != "special_drop_hook.so"]
+    selected = state.get("core_library", "")
+    if selected not in cores:
+        selected = "vdk.so" if "vdk.so" in cores else (cores[0] if len(cores) == 1 else "")
+    result = [{"source": source, "name": selected}] if selected else []
+    companion = companion_for(selected, libraries) if selected else ""
+    if bool(state.get("hook_enabled", bool(companion))) and companion:
+        result.append({"source": source, "name": companion})
+    return result
+
+
+entries = configured_entries()
+enabled = bool(state.get("enabled", bool(entries)))
+if enabled and not entries:
+    configuration_error("da bat MOD nhung danh sach rong")
+preload = [str(roots[item["source"]] / item["name"]) for item in entries] if enabled else []
 if preload:
     inherited = os.environ.get("LD_PRELOAD", "")
     os.environ["LD_PRELOAD"] = ":".join(preload + ([inherited] if inherited else []))

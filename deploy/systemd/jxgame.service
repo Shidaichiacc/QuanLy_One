@@ -7,6 +7,7 @@ WorkingDirectory=/opt/QuanLy_One/JX_Servers/Active/server1
 ExecStart=/opt/QuanLy_One/JX_Servers/Runtime/jxgame-wrapper
 Restart=always
 RestartSec=3
+RestartPreventExitStatus=78
 LogNamespace=jxnative
 [Install]
 WantedBy=multi-user.target
