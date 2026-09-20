@@ -71,6 +71,7 @@ chmod 0755 \
     "$project_root"/JX_Servers/Scripts/start-game-stack \
     "$project_root"/JX_Servers/Scripts/update-server-ip \
     "$project_root"/tools/admin-login-lock \
+    "$project_root"/tools/apply-update \
     "$project_root"/tools/backup-scheduler \
     "$project_root"/tools/init_databases.py \
     "$project_root"/tools/init_site.py \

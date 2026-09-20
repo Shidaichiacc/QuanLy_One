@@ -3,7 +3,7 @@
 Web quản trị JX trên Ubuntu: quản lý nhiều phiên bản server, Start/Stop/Reload,
 Console realtime, MySQL, MSSQL, backup/restore, MOD và Website công khai.
 
-Phiên bản ổn định hiện tại: **v1.3.1**
+Phiên bản ổn định hiện tại: **v1.3.3**
 Mã nguồn và bản phát hành: <https://github.com/Shidaichiacc/QuanLy_One>
 
 > Gói JXNative không chứa server game. Sau khi cài Web và database, hãy đưa
@@ -49,10 +49,10 @@ sudo bash install.sh
 
 ```bash
 cd /opt
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.1/JXNative-v1.3.1.tar.gz
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.1/JXNative-v1.3.1.tar.gz.sha256
-sudo sha256sum -c JXNative-v1.3.1.tar.gz.sha256
-sudo tar -xzf JXNative-v1.3.1.tar.gz -C /opt
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.3/JXNative-v1.3.3.tar.gz
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.3/JXNative-v1.3.3.tar.gz.sha256
+sudo sha256sum -c JXNative-v1.3.3.tar.gz.sha256
+sudo tar -xzf JXNative-v1.3.3.tar.gz -C /opt
 cd /opt/QuanLy_One
 sudo bash install.sh
 ```
@@ -175,9 +175,13 @@ Hai theme có HTML/CSS riêng; chỉ dùng chung dữ liệu cần thiết như 
 ## 7. Kiểm tra và nâng cấp phiên bản
 
 Sau khi đăng nhập, JXNative kiểm tra GitHub Release một lần trong phiên. Kết
-quả nằm ngay dưới số phiên bản ở cuối sidebar. Bấm vào trạng thái này để mở
-popup xem hoặc tải bản phát hành. Trình kiểm tra không tự chạy mã và không tự
-dừng server.
+quả nằm ngay dưới số phiên bản ở cuối sidebar. Bấm vào trạng thái này để xem
+Release, tải gói hoặc mở trang **Cập nhật ngay**.
+
+Cập nhật trực tiếp yêu cầu nhập lại mật khẩu Admin. Nếu game đang chạy, Web
+sẽ hỏi xác nhận trước khi Stop All an toàn. Tiến trình riêng tải gói `.tar.gz`
+và SHA256 từ đúng GitHub Release, xác minh, giải nén rồi chạy `update.sh`; trang
+sẽ tự nối lại và tiếp tục hiển thị tiến độ khi Web khởi động lại.
 
 Quy trình nâng cấp an toàn:
 
@@ -220,12 +224,12 @@ Workflow `.github/workflows/release.yml` tự kiểm tra `VERSION`, đóng gói 
 cd /duong-dan/QuanLy_One
 git init
 git add .
-git commit -m "Release v1.3.1"
+git commit -m "Release v1.3.3"
 git branch -M main
 git remote add origin https://github.com/Shidaichiacc/QuanLy_One.git
 git push -u origin main
-git tag v1.3.1
-git push origin v1.3.1
+git tag v1.3.3
+git push origin v1.3.3
 ```
 
 Tag phải đúng bằng chữ `v` cộng nội dung file `VERSION`. Không commit server

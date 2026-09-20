@@ -1,8 +1,16 @@
 # Lịch sử phiên bản
 
-## v1.3.1
+## v1.3.3
+
+- Thêm cập nhật trực tiếp trên Web: xác minh lại mật khẩu Admin, Stop All an toàn sau khi xác nhận, tự tải gói GitHub Release và SHA256, kiểm tra gói, chạy `update.sh` trong transient systemd unit và hiển thị tiến độ khi Web khởi động lại.
+- Rút gọn trung tâm cập nhật còn ba thao tác **Xem Release**, **Tải về**, **Cập nhật ngay**; chuyển hướng dẫn lệnh thủ công vào khung có thể mở khi cần.
+
+## v1.3.2
 
 - Nâng cấu hình MOD thành danh sách `LD_PRELOAD` nhiều file có thứ tự; mỗi file có thể lấy từ phiên bản active hoặc kho MOD chung, hỗ trợ chọn/nhập tên, đổi thứ tự và tự chuyển cấu hình một MOD cũ.
+
+## v1.3.1
+
 - Sửa bản cài bằng `git clone` thiếu `data/database/seed/account_tong.bak` do quy tắc bỏ qua `*.bak`, khiến thiết lập MSSQL đứng ở 76% và báo `Login failed ... account_tong` (State 38).
 - Đưa backup mẫu MSSQL vào Git và kiểm tra file ngay đầu quy trình; nếu gói cài không đầy đủ, Web báo lỗi rõ ràng thay vì chờ database không tồn tại.
 - Tinh gọn màn thiết lập database lần đầu: bỏ nút chép đồng thời hai mật khẩu, đặt nút hiện/ẩn mật khẩu riêng ở góc phải và thêm nhật ký ngắn theo từng mốc giờ, phần trăm, kết quả hoặc lỗi.

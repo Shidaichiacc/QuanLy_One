@@ -429,6 +429,14 @@ def _load_auth():
     return data
 
 
+def verify_manager_password(password):
+    """Xác minh lại mật khẩu Admin cho các thao tác hệ thống nhạy cảm."""
+    try:
+        return check_password_hash(_load_auth()["password_hash"], password or "")
+    except (KeyError, OSError, ValueError):
+        return False
+
+
 def _save_auth(data):
     STATE_ROOT.mkdir(parents=True, exist_ok=True)
     temp = AUTH_FILE.with_suffix(".tmp")
