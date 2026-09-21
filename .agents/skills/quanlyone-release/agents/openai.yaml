@@ -1,0 +1,7 @@
+interface:
+  display_name: "quanlyone_release"
+  short_description: "Chuẩn bị và phát hành phiên bản QuanLy One"
+  default_prompt: "Dùng $quanlyone-release để chuẩn bị, kiểm thử và phát hành phiên bản QuanLy One mới."
+policy:
+  allow_implicit_invocation: true
+

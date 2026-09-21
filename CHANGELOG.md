@@ -1,5 +1,10 @@
 # Lịch sử phiên bản
 
+## Chưa phát hành
+
+- Thêm `AGENTS.md`, `CONTRIBUTING.md` và kho `docs/knowledge` để AI/người phát triển tiếp tục dự án nhất quán sau khi clone.
+- Thêm hai skill repository `quanlyone_github_publish` và `quanlyone_release` cho quy trình commit/push và phát hành phiên bản an toàn.
+
 ## v1.3.3
 
 - Thêm cập nhật trực tiếp trên Web: xác minh lại mật khẩu Admin, Stop All an toàn sau khi xác nhận, tự tải gói GitHub Release và SHA256, kiểm tra gói, chạy `update.sh` trong transient systemd unit và hiển thị tiến độ khi Web khởi động lại.

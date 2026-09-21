@@ -1,0 +1,7 @@
+interface:
+  display_name: "quanlyone_github_publish"
+  short_description: "Kiểm tra, commit và push mã QuanLy One"
+  default_prompt: "Dùng $quanlyone-github-publish để kiểm tra, commit và push các thay đổi QuanLy One hiện tại."
+policy:
+  allow_implicit_invocation: true
+

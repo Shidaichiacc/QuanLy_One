@@ -243,3 +243,16 @@ sudo bash tools/build-release
 ```
 
 Kết quả gồm `/opt/JXNative-vX.Y.Z.tar.gz` và file `.sha256` tương ứng.
+
+## 10. Tiếp tục phát triển bằng AI/Codex
+
+Sau khi clone repository, mở Codex tại thư mục gốc. Codex sẽ đọc `AGENTS.md` và
+phát hiện các skill trong `.agents/skills`. Kiến trúc, quy tắc an toàn, kiểm thử và
+phát hành nằm trong `docs/knowledge`.
+
+```text
+$quanlyone-github-publish kiểm tra, commit và push thay đổi hiện tại
+$quanlyone-release chuẩn bị và phát hành phiên bản vX.Y.Z
+```
+
+Xem quy trình đóng góp tại [`CONTRIBUTING.md`](CONTRIBUTING.md).
