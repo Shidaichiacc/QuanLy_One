@@ -1,6 +1,6 @@
 # Lịch sử phiên bản
 
-## Chưa phát hành
+## v1.3.4
 
 - Thêm `AGENTS.md`, `CONTRIBUTING.md` và kho `docs/knowledge` để AI/người phát triển tiếp tục dự án nhất quán sau khi clone.
 - Thêm hai skill repository `quanlyone_github_publish` và `quanlyone_release` cho quy trình commit/push và phát hành phiên bản an toàn.
