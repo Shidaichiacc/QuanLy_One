@@ -7,6 +7,7 @@ import hmac
 import json
 import os
 import re
+import signal
 import shutil
 import select
 import subprocess
@@ -74,9 +75,11 @@ SHARED_MOD_ROOT = os.path.join(JX_ROOT, "MOD")
 GAME_START_SCRIPT = os.path.join(JX_ROOT, "Scripts", "start-game-stack")
 GAME_START_STATUS = os.path.join(PROJECT_ROOT, "data", "state", "game-start.status")
 GAME_START_LOG = os.path.join(PROJECT_ROOT, "data", "state", "game-start.log")
+GAME_START_LOCK = "/run/jxnative-game-start.lock"
 GAME_RELOAD_SCRIPT = os.path.join(JX_ROOT, "Scripts", "reload-game-stack")
 GAME_RELOAD_STATUS = os.path.join(PROJECT_ROOT, "data", "state", "game-reload.status")
 GAME_RELOAD_LOG = os.path.join(PROJECT_ROOT, "data", "state", "game-reload.log")
+GAME_RELOAD_LOCK = "/run/jxnative-game-reload.lock"
 GAME_MOD_STATE_ROOT = os.path.join(PROJECT_ROOT, "data", "state", "mods")
 GAME_MOD_MAX_LIBRARIES = 32
 SYSTEM_UPDATE_TOOL = os.path.join(PROJECT_ROOT, "tools", "apply-update")
@@ -2807,7 +2810,7 @@ def available_server_versions():
     except OSError:
         return []
 
-def _operation_status(path, states=("starting", "success", "error")):
+def _operation_status(path, states=("starting", "success", "error"), lock_path=None):
     try:
         with open(path, encoding="utf-8") as status_file:
             lines = [line.rstrip("\n") for line in status_file.readlines()[:3]]
@@ -2815,6 +2818,14 @@ def _operation_status(path, states=("starting", "success", "error")):
             return None
         updated = int(lines[2])
         age = max(0, int(time.time()) - updated)
+        if lines[0] == "starting" and lock_path and age >= 10 and not os.path.exists(lock_path):
+            return {
+                "state": "error",
+                "message": "Tiến trình nền đã dừng bất thường; điều khiển đã được mở khóa. Hãy xem log hoặc dùng !!! để dọn toàn bộ.",
+                "age": age,
+                "updated": updated,
+                "stale": True,
+            }
         if age > (300 if lines[0] == "success" else 1800):
             return None
         return {"state": lines[0], "message": lines[1], "age": age, "updated": updated}
@@ -2822,7 +2833,7 @@ def _operation_status(path, states=("starting", "success", "error")):
         return None
 
 def game_reload_status():
-    return _operation_status(GAME_RELOAD_STATUS, ("starting", "success", "error"))
+    return _operation_status(GAME_RELOAD_STATUS, ("starting", "success", "error"), GAME_RELOAD_LOCK)
 
 def latest_game_operation():
     operations = []
@@ -3055,7 +3066,7 @@ def game_start_preflight(check_databases=True):
     return None
 
 def game_start_status():
-    return _operation_status(GAME_START_STATUS)
+    return _operation_status(GAME_START_STATUS, lock_path=GAME_START_LOCK)
 
 
 def _default_log_session(now=None):
@@ -3335,7 +3346,7 @@ pre.log{background:#05080f;border:1px solid var(--line);border-radius:9px;paddin
 .toggle-line input{width:18px;height:18px;margin:0;accent-color:var(--acc)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.tools{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}form.inline{display:inline}button.danger,.btn.danger{background:var(--err)}textarea.body{min-height:430px;font-family:ui-monospace,monospace}.page-heading{margin:0 0 18px;font-size:25px}.media-thumb{width:90px;max-height:70px;object-fit:cover;border-radius:6px}
 .header-server{display:flex;align-items:center;gap:5px;min-width:150px;max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.header-server b{color:var(--acc);overflow:hidden;text-overflow:ellipsis}.dashboard-grid{display:grid;grid-template-columns:minmax(360px,32%) minmax(620px,68%);gap:16px;align-items:start}.dashboard-grid .card{margin-bottom:0}.dashboard-actionbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;margin-bottom:14px}.dashboard-actionbar h2{margin:0}.server-main-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.server-main-actions form{margin:0}.service-table{table-layout:fixed}.service-table td,.service-table th{padding:8px 5px}.service-table th:nth-child(1){width:auto}.service-table th:nth-child(2){width:54px;text-align:center}.service-table th:nth-child(3){width:72px;text-align:right}.service-source{font-weight:750;border:0;background:transparent;padding:0;text-align:left;white-space:normal}.service-state{text-align:center}.state-dot{display:inline-block;width:13px;height:13px;border-radius:50%;background:var(--err);box-shadow:0 0 0 3px rgba(217,83,79,.12)}.state-dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(20,189,160,.14)}.state-dot.busy{background:var(--warn);animation:statePulse 1s infinite}.service-action{text-align:right}.service-action button{min-width:54px;padding:7px 9px}.database-source{border:0;background:transparent;padding:0;font-weight:750;text-align:left}.session-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-6px 0 10px;color:var(--mut);font-size:12px}.log-toolbar,.log-options{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.log-source{padding:6px 9px;background:#293f54;color:var(--source-color,#dce7f1);border:1px solid var(--source-color,#51677b)}.log-source.active{background:var(--source-color,var(--acc));color:#071018}.log-options select{width:auto;padding:7px 9px}.log-options label{display:flex;align-items:center;gap:5px;margin:0}.log-options input{width:16px;height:16px;margin:0}.dashboard-log{height:calc(100vh - 285px);min-height:610px;max-height:none;margin:10px 0 0;background:#03060b;border:1px solid var(--line);border-radius:9px;padding:12px;overflow:auto;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}.log-line{margin-bottom:2px;word-break:break-word}.log-time{opacity:.48;margin-right:7px}.log-service{font-weight:800;margin-right:7px}.log-error{color:#ff5c72!important}.log-warning{color:#ffb02e!important}.log-success{color:#39d98a!important}.mod-summary{border-top:1px solid var(--line);margin-top:15px;padding-top:12px;display:flex;align-items:center;gap:10px}.mod-summary-info{min-width:0;flex:1}.mod-summary-title{font-weight:750;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mod-summary-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.mod-summary .pill{padding:2px 7px;font-size:10px}.mod-config-button{padding:7px 10px;white-space:nowrap}.mod-modal[hidden]{display:none}.mod-modal{position:fixed;inset:0;z-index:900;background:rgba(5,12,20,.78);display:grid;place-items:center;padding:18px}.mod-dialog{width:min(680px,100%);max-height:calc(100vh - 36px);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.58)}.mod-dialog-head,.mod-dialog-foot{display:flex;align-items:center;gap:9px;padding:15px 18px}.mod-dialog-head{border-bottom:1px solid var(--line)}.mod-dialog-head h2{margin:0;flex:1;font-size:18px}.mod-dialog-body{padding:17px 18px}.mod-server-note{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:rgba(59,137,212,.06);margin-bottom:15px}.mod-enable-line{display:flex;align-items:center;gap:9px;color:var(--fg);font-weight:700;margin:0 0 15px}.mod-enable-line input,.mod-hook-line input{width:18px;height:18px;margin:0}.mod-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:7px 0 15px}.mod-source-card{margin:0;padding:12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;color:var(--fg);display:grid;grid-template-columns:auto 1fr;gap:4px 9px;align-items:start}.mod-source-card input{width:17px;height:17px;margin:2px 0 0;grid-row:1/3}.mod-source-card b{font-size:13px}.mod-source-card small{color:var(--mut);line-height:1.35}.mod-source-card.selected{border-color:var(--acc);box-shadow:0 0 0 2px rgba(59,137,212,.13);background:rgba(59,137,212,.07)}.mod-library-label{margin-top:0}.mod-hook-line{display:flex;align-items:center;gap:9px;color:var(--fg);margin:14px 0 0}.mod-hook-line.disabled{opacity:.5}.mod-empty{color:var(--warn);font-size:12px;margin:7px 0 0}.mod-dialog-foot{border-top:1px solid var(--line);justify-content:flex-end}.operation-notice{padding:11px 14px;margin-bottom:14px;border:1px solid var(--line);border-radius:10px}.operation-notice.starting{border-color:var(--warn);color:var(--warn)}.operation-notice.success{border-color:var(--ok);color:var(--ok)}.operation-notice.error{border-color:var(--err);color:var(--err)}.compact-status td{padding:8px 5px}.server-center-tabs{display:flex;gap:5px;border-bottom:1px solid var(--line);margin-bottom:18px;position:sticky;top:64px;background:var(--bg);padding-top:4px;z-index:12}.server-center-tab{padding:10px 15px;border-radius:9px 9px 0 0;text-decoration:none;color:var(--mut);font-weight:700}.server-center-tab.active{background:var(--acc);color:#fff}@keyframes statePulse{50%{opacity:.35;transform:scale(.8)}}
-.mod-dialog{width:min(760px,100%)}.mod-add-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end}.mod-add-row label{margin:0}.mod-add-row button{height:40px;min-width:84px}.mod-add-help{margin:7px 0 0;color:var(--mut);font-size:12px}.mod-list-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 8px}.mod-list-heading b{font-size:13px}.mod-list-heading span{font-size:11px;color:var(--mut)}.mod-list{display:grid;gap:7px;min-height:48px}.mod-entry{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.025)}.mod-entry-index{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:rgba(59,137,212,.14);color:var(--acc);font-size:11px;font-weight:800}.mod-entry-main{min-width:0}.mod-entry-name{display:block;font:700 13px ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mod-entry-source{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:10px;background:rgba(59,137,212,.12);color:var(--mut);font-size:10px}.mod-entry-source.shared{background:rgba(57,217,138,.12);color:var(--ok)}.mod-entry-source.missing{background:rgba(255,92,114,.14);color:var(--err)}.mod-entry-actions{display:flex;gap:5px}.mod-entry-actions button{width:30px;height:30px;padding:0;border-radius:7px;background:#2a3346}.mod-entry-actions .remove{background:rgba(217,83,79,.82)}.mod-empty-list{padding:13px;border:1px dashed var(--line);border-radius:9px;text-align:center;color:var(--mut);font-size:12px}.mod-form-error{min-height:18px;margin:7px 0 0;color:var(--err);font-size:12px}.dashboard-grid{grid-template-columns:320px minmax(620px,1fr);gap:14px}.server-main-actions{margin:0 0 12px;flex-wrap:nowrap}.server-main-actions form{flex:1}.server-main-actions button{width:100%;padding:8px 5px;white-space:nowrap}.service-table td,.service-table th{padding:7px 5px}.service-table th:nth-child(2){width:36px}.service-table th:nth-child(3){width:64px}.service-row,.database-row{cursor:pointer;transition:background .14s}.service-row:hover,.database-row:hover,.service-row.active,.database-row.active{background:rgba(59,137,212,.11)}.service-row:focus-visible,.database-row:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}.service-source,.database-source{pointer-events:none}.dashboard-log{height:calc(100vh - 220px);min-height:650px}
+.mod-dialog{width:min(760px,100%)}.mod-add-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end}.mod-add-row label{margin:0}.mod-add-row button{height:40px;min-width:84px}.mod-add-help{margin:7px 0 0;color:var(--mut);font-size:12px}.mod-list-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 8px}.mod-list-heading b{font-size:13px}.mod-list-heading span{font-size:11px;color:var(--mut)}.mod-list{display:grid;gap:7px;min-height:48px}.mod-entry{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.025)}.mod-entry-index{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:rgba(59,137,212,.14);color:var(--acc);font-size:11px;font-weight:800}.mod-entry-main{min-width:0}.mod-entry-name{display:block;font:700 13px ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mod-entry-source{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:10px;background:rgba(59,137,212,.12);color:var(--mut);font-size:10px}.mod-entry-source.shared{background:rgba(57,217,138,.12);color:var(--ok)}.mod-entry-source.missing{background:rgba(255,92,114,.14);color:var(--err)}.mod-entry-actions{display:flex;gap:5px}.mod-entry-actions button{width:30px;height:30px;padding:0;border-radius:7px;background:#2a3346}.mod-entry-actions .remove{background:rgba(217,83,79,.82)}.mod-empty-list{padding:13px;border:1px dashed var(--line);border-radius:9px;text-align:center;color:var(--mut);font-size:12px}.mod-form-error{min-height:18px;margin:7px 0 0;color:var(--err);font-size:12px}.dashboard-grid{grid-template-columns:320px minmax(620px,1fr);gap:14px}.server-main-actions{margin:0 0 12px;flex-wrap:nowrap}.server-main-actions form{flex:1}.server-main-actions button{width:100%;padding:8px 5px;white-space:nowrap}.server-main-actions .emergency-stop-form{flex:0 0 auto}.server-main-actions .emergency-stop-button{width:38px;min-width:38px;padding:8px 4px;background:#b42318;color:#fff;border-color:#e05247;font-weight:900;letter-spacing:-1px}.server-main-actions .emergency-stop-button:hover{background:#d92d20}.service-table td,.service-table th{padding:7px 5px}.service-table th:nth-child(2){width:36px}.service-table th:nth-child(3){width:64px}.service-row,.database-row{cursor:pointer;transition:background .14s}.service-row:hover,.database-row:hover,.service-row.active,.database-row.active{background:rgba(59,137,212,.11)}.service-row:focus-visible,.database-row:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}.service-source,.database-source{pointer-events:none}.dashboard-log{height:calc(100vh - 220px);min-height:650px}
 @media(max-width:1100px){.dashboard-grid{grid-template-columns:1fr}.dashboard-log{height:600px;min-height:450px}}
 @media(max-width:1250px){.status-chip.status-disk{display:none}}@media(max-width:1050px){.status-chip.status-ram{display:none}}@media(max-width:900px){.status-chip.status-cpu,.status-chip.status-ram,.status-chip.status-disk{display:none}.sidebar{position:fixed;left:0;transform:translateX(-100%);width:260px!important;transition:transform .22s ease}.sidebar.mobile-open{transform:translateX(0)}.mobile-toggle{display:inline-block}body.sidebar-collapsed .sidebar{width:260px;flex-basis:260px}body.sidebar-collapsed .brand-mark,body.sidebar-collapsed .brand-name,body.sidebar-collapsed .nav-group-title,body.sidebar-collapsed .nav-chevron,body.sidebar-collapsed .nav-label,body.sidebar-collapsed .version-label{display:block}body.sidebar-collapsed .brand{padding:0 14px;justify-content:flex-start}body.sidebar-collapsed .sidebar-toggle{position:static;background:rgba(255,255,255,.1)}body.sidebar-collapsed .nav-group-toggle,body.sidebar-collapsed .sidebar a{justify-content:flex-start}body.sidebar-collapsed .sidebar-version{padding:11px 15px;text-align:left}body.sidebar-collapsed .sidebar-version b{font-size:12px}.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(10,25,40,.5);z-index:25}.sidebar-backdrop.show{display:block}main{padding:18px 14px}.topbar{padding:8px 12px}.grid{grid-template-columns:1fr}}
 @media(max-width:560px){.status-chip.status-ip{max-width:150px;overflow:hidden;text-overflow:ellipsis}.status-chip.status-time{display:none}.mod-source-grid,.mod-add-row{grid-template-columns:1fr}.mod-add-row button{width:100%}.mod-entry{grid-template-columns:25px minmax(0,1fr)}.mod-entry-actions{grid-column:2;justify-content:flex-end}.dashboard-log{height:380px}}
@@ -4025,6 +4036,7 @@ def dashboard():
         <form method="post" action="/control"><button class="ok" id="startAllButton" name="action" value="start_all" {{'disabled' if all_running else ''}}>▶ Start All</button></form>
         <form method="post" action="{{ url_for('reload_game') }}" data-confirm="Reload an toàn: dừng S3Relay → dừng GameServer → bật S3Relay → bật GameServer. Tiếp tục?"><button id="reloadButton" {% if not (comps[4][2] and comps[5][2]) %}disabled{% endif %}>↻ Reload</button></form>
         <form method="post" action="/control" data-confirm="Stop All và chờ toàn bộ server lưu dữ liệu?"><button class="err" id="stopAllButton" name="action" value="stop_all" {{'disabled' if not any_running else ''}}>■ Stop All</button></form>
+        <form class="emergency-stop-form" method="post" action="{{url_for('emergency_stop_game')}}" data-confirm="DỪNG KHẨN CẤP sẽ cưỡng bức tắt cả 6 thành phần game và xóa trạng thái đang bị kẹt. Chỉ dùng khi các nút điều khiển bị khóa hoặc Stop All không hoàn tất. Tiếp tục?" data-confirm-button="Dừng khẩn cấp" data-dialog-danger="1"><input type="hidden" name="csrf_token" value="{{manager_csrf}}"><button type="submit" class="emergency-stop-button danger" title="Dừng khẩn cấp và mở khóa điều khiển" aria-label="Dừng khẩn cấp">!!!</button></form>
       </div>
       <table class="service-table resource-service-table"><tr><th>Thành phần</th><th title="Trạng thái">●</th><th>CPU</th><th>RAM</th><th>Thao tác</th></tr>
       {% for unit,label,run,resource in comps %}<tr class="service-row" data-console-url="{{url_for('console_page', source=unit)}}" tabindex="0" title="{{label}} — bấm cả dòng để mở console">
@@ -4042,8 +4054,8 @@ def dashboard():
       </table>
       <div class="mod-summary"><div class="mod-summary-info"><span class="mod-summary-title" title="{{mod.summary}}">🧩 MOD game — {{mod.summary}}</span><div class="mod-summary-meta"><span class="pill {{'on' if mod.enabled else 'off'}}">{{'Đang bật' if mod.enabled else 'Đang tắt'}}</span><span class="pill">{{mod.libraries|length}} file</span>{% for label in mod.source_labels %}<span class="pill">{{label}}</span>{% endfor %}{% if mod.invalid_count %}<span class="pill off">{{mod.invalid_count}} file bị thiếu</span>{% endif %}</div></div><button type="button" class="mut mod-config-button" id="openModSettings">Cấu hình</button></div>
       <div class="mod-modal" id="modSettingsModal" hidden aria-hidden="true"><section class="mod-dialog" role="dialog" aria-modal="true" aria-labelledby="modDialogTitle"><div class="mod-dialog-head"><h2 id="modDialogTitle">🧩 Cấu hình MOD game</h2><button type="button" class="mut" data-close-mod>✕</button></div>
-        <form id="modSettingsForm" method="post" action="{{ url_for('mod_settings') }}" data-game-running="{{'1' if game_running else '0'}}" data-libraries='{{mod.available|tojson}}' data-initial='{{ {"enabled":mod.enabled,"libraries":mod.libraries}|tojson }}' data-max-libraries="{{mod.max_libraries}}">
-          <div class="mod-dialog-body"><input type="hidden" name="reload_after_save" id="reloadAfterModSave" value="0"><input type="hidden" name="libraries" id="modLibrariesValue" value="[]"><div class="mod-server-note">Server đang chọn: <b>{{header_server.name if header_server else 'Chưa chọn'}}</b><br><span class="muted">Mỗi phiên bản lưu danh sách MOD và thứ tự nạp riêng.</span></div>
+        <form id="modSettingsForm" method="post" action="{{ url_for('mod_settings') }}" data-libraries='{{mod.available|tojson}}' data-initial='{{ {"enabled":mod.enabled,"libraries":mod.libraries}|tojson }}' data-max-libraries="{{mod.max_libraries}}">
+          <div class="mod-dialog-body"><input type="hidden" name="libraries" id="modLibrariesValue" value="[]"><div class="mod-server-note">Server đang chọn: <b>{{header_server.name if header_server else 'Chưa chọn'}}</b><br><span class="muted">Mỗi phiên bản lưu danh sách MOD và thứ tự nạp riêng. Nếu GameServer đang chạy, cấu hình mới chỉ có hiệu lực sau khi khởi động lại.</span></div>
           <label class="mod-enable-line"><input type="checkbox" name="enabled" {% if mod.enabled %}checked{% endif %}> Nạp MOD khi chạy GameServer</label>
           <label style="margin-top:0">Nguồn của file muốn thêm</label><div class="mod-source-grid"><label class="mod-source-card"><input type="radio" name="source" value="version" checked><b>Trong phiên bản active</b><small>File `.so` trong thư mục `server1` đang sử dụng.</small></label><label class="mod-source-card"><input type="radio" name="source" value="shared"><b>Kho MOD dùng chung</b><small>File trong `JX_Servers/MOD`, có thể dùng cho nhiều phiên bản.</small></label></div>
           <div class="mod-add-row"><label><span id="modLibraryLabel">File trong phiên bản active</span><input type="text" id="modLibraryInput" list="modLibraryChoices" autocomplete="off" spellcheck="false" placeholder="Chọn hoặc nhập tên file .so"><datalist id="modLibraryChoices"></datalist></label><button type="button" class="ok" id="addModLibrary">＋ Thêm</button></div>
@@ -4063,12 +4075,12 @@ def dashboard():
         function entryAvailable(item){return Array.isArray(available[item.source])&&available[item.source].includes(item.name)}
         function syncSource(){const source=currentSource(),choices=Array.isArray(available[source])?available[source]:[];sourceInputs.forEach(input=>input.closest('.mod-source-card').classList.toggle('selected',input.checked));choicesList.replaceChildren();for(const name of choices){const option=document.createElement('option');option.value=name;choicesList.appendChild(option)}libraryLabel.textContent=source==='shared'?'File trong kho MOD dùng chung':'File trong phiên bản active';sourceHelp.textContent=choices.length?`Đã tìm thấy ${choices.length} file ELF 32-bit. Có thể chọn trong danh sách hoặc tự nhập đúng tên file.`:'Nguồn này chưa có file .so ELF 32-bit hợp lệ.';libraryInput.value='';setError('')}
         function renderMods(){hidden.value=JSON.stringify(draft);list.replaceChildren();if(!draft.length){const empty=document.createElement('div');empty.className='mod-empty-list';empty.textContent='Chưa có file .so nào trong danh sách.';list.appendChild(empty);return}draft.forEach((item,index)=>{const row=document.createElement('div');row.className='mod-entry';const number=document.createElement('span');number.className='mod-entry-index';number.textContent=String(index+1);const main=document.createElement('div');main.className='mod-entry-main';const name=document.createElement('span');name.className='mod-entry-name';name.textContent=item.name;const badge=document.createElement('span');const exists=entryAvailable(item);badge.className='mod-entry-source '+(exists?(item.source==='shared'?'shared':''):'missing');badge.textContent=exists?sourceLabel(item.source):sourceLabel(item.source)+' · Thiếu file';main.append(name,badge);const actions=document.createElement('div');actions.className='mod-entry-actions';[['↑','Lên',-1],['↓','Xuống',1],['✕','Xóa',0]].forEach(([textValue,title,move])=>{const button=document.createElement('button');button.type='button';button.textContent=textValue;button.title=title;if(move===0)button.className='remove';button.disabled=(move<0&&index===0)||(move>0&&index===draft.length-1);button.addEventListener('click',()=>{if(move===0)draft.splice(index,1);else{const target=index+move;[draft[index],draft[target]]=[draft[target],draft[index]]}setError('');renderMods()});actions.appendChild(button)});row.append(number,main,actions);list.appendChild(row)})}
-        function resetDraft(){modForm.reset();sourceInputs[0].checked=true;draft=Array.isArray(initial.libraries)?initial.libraries.map(item=>({source:item.source,name:item.name})):[];document.getElementById('reloadAfterModSave').value='0';syncSource();renderMods()}
+        function resetDraft(){modForm.reset();sourceInputs[0].checked=true;draft=Array.isArray(initial.libraries)?initial.libraries.map(item=>({source:item.source,name:item.name})):[];syncSource();renderMods()}
         function addLibrary(){const source=currentSource(),name=libraryInput.value.trim(),choices=Array.isArray(available[source])?available[source]:[];if(!name){setError('Hãy chọn hoặc nhập tên file .so.');libraryInput.focus();return}if(!choices.includes(name)){setError(`Không tìm thấy “${name}” trong ${sourceLabel(source).toLowerCase()}.`);libraryInput.focus();return}if(draft.some(item=>item.source===source&&item.name===name)){setError(`File ${name} đã có trong danh sách.`);return}if(draft.length>=maxLibraries){setError(`Chỉ được nạp tối đa ${maxLibraries} file .so.`);return}draft.push({source,name});libraryInput.value='';setError('');renderMods();libraryInput.focus()}
         function closeMod(reset){modal.hidden=true;modal.setAttribute('aria-hidden','true');document.body.style.overflow='';if(reset)resetDraft()}
         function openMod(){resetDraft();modal.hidden=false;modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';setTimeout(()=>libraryInput.focus(),0)}
         openButton.addEventListener('click',openMod);modal.querySelectorAll('[data-close-mod]').forEach(button=>button.addEventListener('click',()=>closeMod(true)));modal.addEventListener('click',event=>{if(event.target===modal)closeMod(true)});document.addEventListener('keydown',event=>{const dialogOverlay=document.getElementById('jxDialogOverlay'),dialogIsOpen=dialogOverlay&&!dialogOverlay.hidden;if(event.key==='Escape'&&!modal.hidden&&!dialogIsOpen)closeMod(true)});sourceInputs.forEach(input=>input.addEventListener('change',syncSource));addButton.addEventListener('click',addLibrary);libraryInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addLibrary()}});resetDraft();
-        modForm.addEventListener('submit',async event=>{if(modForm.dataset.modBypass==='1'){delete modForm.dataset.modBypass;return}setError('');if(modForm.elements.enabled.checked&&!draft.length){event.preventDefault();setError('Đã bật MOD nhưng danh sách file .so đang trống.');return}const missing=draft.find(item=>!entryAvailable(item));if(missing){event.preventDefault();setError(`Không còn tìm thấy file ${missing.name}. Hãy xóa mục này hoặc chép lại file.`);return}hidden.value=JSON.stringify(draft);const current={enabled:modForm.elements.enabled.checked,libraries:draft},changed=JSON.stringify(initial)!==JSON.stringify(current);if(changed&&modForm.dataset.gameRunning==='1'){event.preventDefault();const approved=await window.JXDialog.confirm(`GameServer đang chạy. QuanLy One sẽ Reload an toàn S3Relay + GameServer để áp dụng ${draft.length} file .so theo đúng thứ tự. Tiếp tục?`,{danger:true,confirmText:'Lưu và Reload'});if(!modal.hidden)document.body.style.overflow='hidden';if(!approved)return;document.getElementById('reloadAfterModSave').value='1';modForm.dataset.modBypass='1';modForm.requestSubmit(event.submitter||undefined)}})
+        modForm.addEventListener('submit',event=>{setError('');if(modForm.elements.enabled.checked&&!draft.length){event.preventDefault();setError('Đã bật MOD nhưng danh sách file .so đang trống.');return}const missing=draft.find(item=>!entryAvailable(item));if(missing){event.preventDefault();setError(`Không còn tìm thấy file ${missing.name}. Hãy xóa mục này hoặc chép lại file.`);return}hidden.value=JSON.stringify(draft)})
       }
       let statusLoading=false;async function refreshDashboard(){if(statusLoading)return;statusLoading=true;try{const response=await fetch({{ url_for('dashboard_status')|tojson }},{cache:'no-store',headers:{Accept:'application/json'}});if(!response.ok)return;const data=await response.json(),values=Object.values(data.components),runningCount=values.filter(Boolean).length,busy=!!(data.operation&&data.operation.state==='starting'),busyScope=new Set((data.session&&data.session.scope)||[]);for(const [unit,running] of Object.entries(data.components)){const dot=document.getElementById('state-'+unit),button=document.getElementById('action-'+unit),unitBusy=busy&&busyScope.has(unit),metric=data.resources?.[unit]||{};if(dot){dot.className='state-dot '+(unitBusy?'busy':running?'on':'');dot.title=unitBusy?'Đang xử lý':running?'Đang chạy':'Đang tắt'}if(button){button.value=running?'stop':'start';button.textContent=running?'Tắt':'Bật';button.className=running?'err':'ok';button.disabled=busy}const cpu=document.getElementById('cpu-'+unit),ram=document.getElementById('ram-'+unit);if(cpu)cpu.textContent=Number(metric.cpu||0).toFixed(1)+'%';if(ram)ram.textContent=Number(metric.ram_mb||0).toFixed(1)+' MB'}for(const [kind,running] of Object.entries(data.databases)){const dot=document.getElementById('db-state-'+kind);if(dot){dot.className='state-dot '+(running?'on':'');dot.title=running?'Kết nối OK':'Mất kết nối'}}document.getElementById('startAllButton').disabled=busy||runningCount===6;document.getElementById('reloadButton').disabled=busy||!(data.components.jxs3relay&&data.components.jxgame);document.getElementById('stopAllButton').disabled=busy||runningCount===0;if(modForm)modForm.dataset.gameRunning=data.components.jxgame?'1':'0';const serviceHealth=document.getElementById('healthServices'),databaseHealth=document.getElementById('healthDatabase'),databasesOK=data.databases.mssql&&data.databases.mysql;serviceHealth.textContent=runningCount+' / 6 đang chạy';serviceHealth.className=runningCount===6?'health-good':'health-warn';document.getElementById('healthOnline').textContent=data.health.online??'--';document.getElementById('healthUptime').textContent=data.health.uptime||'--';databaseHealth.textContent=databasesOK?'Ổn định':'Cần kiểm tra';databaseHealth.className=databasesOK?'health-good':'health-warn';const notice=document.getElementById('operationNotice'),text=document.getElementById('operationText'),link=document.getElementById('operationLog'),showOperation=data.operation&&!(data.operation.state==='success'&&data.operation.age>=5);if(showOperation){notice.hidden=false;notice.className='operation-notice '+data.operation.state;text.textContent=(data.operation.state==='starting'?'⏳ ':data.operation.state==='success'?'✅ ':'❌ ')+data.operation.message;link.style.display=data.operation.state==='error'?'inline-block':'none';link.href=data.operation.kind==='reload'?{{ url_for('reload_log')|tojson }}:{{ url_for('startup_log')|tojson }}}else notice.hidden=true}catch(e){}finally{statusLoading=false}}
       refreshDashboard();setInterval(refreshDashboard,2000);
@@ -4091,6 +4103,134 @@ def dashboard_status():
         "operation": latest_game_operation(),
         "session": _log_session_view(),
     })
+
+
+def _write_game_operation_status(path, state, message):
+    """Ghi trạng thái nguyên tử để dashboard không đọc trúng file dở dang."""
+    os.makedirs(os.path.dirname(path), mode=0o750, exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as status_file:
+        status_file.write(f"{state}\n{message}\n{int(time.time())}\n")
+    os.replace(tmp, path)
+
+
+def _game_operation_helper_pids():
+    """Chỉ tìm đúng helper Start/Reload của QuanLy One trong /proc."""
+    scripts = {GAME_START_SCRIPT, GAME_RELOAD_SCRIPT}
+    found = []
+    for proc_entry in Path("/proc").glob("[0-9]*"):
+        try:
+            pid = int(proc_entry.name)
+            if pid == os.getpid():
+                continue
+            args = proc_entry.joinpath("cmdline").read_bytes().split(b"\0")
+            decoded = {arg.decode("utf-8", "surrogateescape") for arg in args if arg}
+            if scripts.intersection(decoded):
+                found.append(pid)
+        except (OSError, ValueError):
+            continue
+    return found
+
+
+def _terminate_game_operation_helpers():
+    errors = []
+    targets = []
+    for pid in _game_operation_helper_pids():
+        try:
+            pgid = os.getpgid(pid)
+            targets.append((pid, pgid))
+            if pgid == pid:
+                os.killpg(pgid, signal.SIGTERM)
+            else:
+                os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            continue
+        except OSError as exc:
+            errors.append(f"helper PID {pid}: {exc}")
+    if targets:
+        time.sleep(0.5)
+    for pid, pgid in targets:
+        if not os.path.exists(f"/proc/{pid}"):
+            continue
+        try:
+            if pgid == pid:
+                os.killpg(pgid, signal.SIGKILL)
+            else:
+                os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        except OSError as exc:
+            errors.append(f"helper PID {pid}: {exc}")
+    return errors
+
+
+def force_stop_game_stack():
+    """Cứu hộ khi Start/Reload kẹt: bỏ qua thời gian chờ lưu và cưỡng bức dừng."""
+    labels = dict(COMPONENTS)
+    units = [unit for unit, _pause in STOP_SEQUENCE]
+    active_before = {unit: unit_active(unit) for unit in units}
+    errors = _terminate_game_operation_helpers()
+
+    for unit in units:
+        try:
+            # Stop không chờ trước, sau đó kill toàn bộ process còn nằm trong cgroup.
+            sctl("stop", "--no-block", unit, timeout=8)
+            sctl("kill", "--kill-whom=all", "--signal=SIGKILL", unit, timeout=8)
+            result = sctl("stop", unit, timeout=15)
+            if result.returncode != 0:
+                detail = (result.stderr or result.stdout or "systemctl stop thất bại").strip()
+                errors.append(f"{unit}: {detail}")
+            sctl("reset-failed", unit, timeout=8)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            errors.append(f"{unit}: {exc}")
+
+    for lock_path in (GAME_START_LOCK, GAME_RELOAD_LOCK):
+        shutil.rmtree(lock_path, ignore_errors=True)
+    for runtime_path in ("/tmp/s3relay_canclose", "/tmp/s3relay_tty"):
+        try:
+            os.unlink(runtime_path)
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            errors.append(f"{runtime_path}: {exc}")
+
+    remaining = [unit for unit in units if unit_active(unit)]
+    if remaining:
+        errors.append("còn chạy: " + ", ".join(remaining))
+    message = ("Đã dừng khẩn cấp và mở khóa điều khiển."
+               if not errors else "Dừng khẩn cấp chưa hoàn tất: " + "; ".join(errors))
+    for status_path in (GAME_START_STATUS, GAME_RELOAD_STATUS):
+        try:
+            _write_game_operation_status(status_path, "error", message)
+        except OSError as exc:
+            errors.append(f"trạng thái: {exc}")
+    try:
+        Path("/run/jx-ready.status").write_text(
+            f"STOPPED EMERGENCY {datetime.now():%F %T}\n", encoding="ascii")
+    except OSError:
+        pass
+    stopped = [labels.get(unit, unit) for unit in units if active_before[unit] and unit not in remaining]
+    return stopped, errors
+
+
+@app.post("/control/emergency-stop")
+def emergency_stop_game():
+    supplied = request.form.get("csrf_token", "")
+    expected = session.get("csrf_token", "")
+    if not expected or not hmac.compare_digest(supplied, expected):
+        flash("err", "Phiên xác nhận đã hết hạn. Hãy tải lại trang rồi thử lại.")
+        return redirect(url_for("dashboard"))
+    stopped, errors = force_stop_game_stack()
+    detail = "Đã dừng khẩn cấp: " + (", ".join(stopped) or "không có dịch vụ đang chạy")
+    if errors:
+        detail += ". Lỗi: " + "; ".join(errors)
+    _record_activity("Dừng khẩn cấp", detail, "error" if errors else "ok")
+    if errors:
+        flash("err", detail)
+    else:
+        flash("ok", "Đã cưỡng bức dừng toàn bộ game và mở khóa điều khiển. Bây giờ có thể dùng Start All.")
+    return redirect(url_for("dashboard"))
+
 
 @app.route("/control", methods=["POST"])
 def control():
@@ -4229,9 +4369,6 @@ def mod_settings():
     previous = {"schema_version": 2, "enabled": current["enabled"], "libraries": current["libraries"]}
     changed = state != previous
     game_running = unit_active("jxgame")
-    if changed and game_running and request.form.get("reload_after_save") != "1":
-        flash("err", "GameServer đang chạy. Cấu hình chưa được lưu vì chưa xác nhận Reload Game.")
-        return redirect(url_for("dashboard"))
     state_path = _game_mod_state_path()
     os.makedirs(os.path.dirname(state_path), mode=0o750, exist_ok=True)
     tmp = state_path + ".tmp"
@@ -4242,21 +4379,17 @@ def mod_settings():
         os.chmod(tmp, 0o600)
         os.replace(tmp, state_path)
         if changed and game_running:
-            try:
-                _launch_game_reload()
-                flash("ok", f"Đã lưu {len(entries)} file MOD và bắt đầu Reload Game an toàn để áp dụng.")
-            except (OSError, RuntimeError) as exc:
-                flash("err", "Đã lưu cấu hình mod nhưng chưa Reload được: " + str(exc))
+            flash("ok", f"Đã lưu {len(entries)} file MOD. GameServer vẫn đang chạy; hãy khởi động lại GameServer để cấu hình mới có hiệu lực.")
         elif changed:
             flash("ok", f"Đã lưu {len(entries)} file MOD. Cấu hình sẽ áp dụng khi bật GameServer.")
         elif current["legacy"]:
             flash("ok", "Đã chuyển cấu hình MOD cũ sang danh sách mới.")
         else:
-            flash("ok", "Cấu hình mod không thay đổi.")
+            flash("ok", "Cấu hình MOD không thay đổi.")
     except OSError as exc:
         try: os.unlink(tmp)
         except OSError: pass
-        flash("err", "Không lưu được cấu hình mod: " + str(exc))
+        flash("err", "Không lưu được cấu hình MOD: " + str(exc))
     return redirect(url_for("dashboard"))
 
 @app.route("/logs/startup")

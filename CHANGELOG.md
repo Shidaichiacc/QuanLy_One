@@ -1,5 +1,11 @@
 # Lịch sử phiên bản
 
+## Chưa phát hành
+
+- Thêm nút `!!!` dừng khẩn cấp trên Bảng điều khiển: luôn khả dụng, cưỡng bức dừng sáu thành phần game, kết thúc helper Start/Reload và xóa trạng thái khóa bị kẹt.
+- Tự phát hiện tiến trình Start All/Reload đã mất trong khi file trạng thái còn ghi `starting`; sau 10 giây Web báo lỗi và tự mở khóa điều khiển.
+- Lưu cấu hình MOD khi GameServer đang chạy không còn tự Reload hoặc khởi động dịch vụ; Web chỉ lưu và nhắc phải khởi động lại GameServer để áp dụng.
+
 ## v1.3.4
 
 - Thêm `AGENTS.md`, `CONTRIBUTING.md` và kho `docs/knowledge` để AI/người phát triển tiếp tục dự án nhất quán sau khi clone.
