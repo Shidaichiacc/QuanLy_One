@@ -68,3 +68,17 @@ sẵn sàng. Không thay bằng việc bật đồng thời sáu service nếu �
   chạy `update.sh` trong tiến trình systemd riêng.
 - `.github/workflows/release.yml` đóng gói và tải asset Release khi push tag `v*`.
 
+
+## Quản lý dung lượng và dọn log
+
+`app/web/admin/storage_manager.py` cung cấp kiểm kê, xem trước và thực hiện dọn;
+`templates/storage.html`, `static/storage.js`, `static/storage.css` là giao diện,
+được đăng ký qua `manager_extension.py`. Trang có bốn nhóm tổng quan, Dọn nhanh
+1 ngày/7 ngày/tất cả và chi tiết thu gọn. Mốc ngày dựa trên lần cập nhật file,
+nghĩa là giữ file mới hơn mốc đã chọn. Xem trước gắn với phiên và cần xác nhận;
+khi xóa phải kiểm tra lại file/đường dẫn và bỏ file đang dùng.
+
+Nguồn gồm log các phiên bản game, log quản lý, Apport/systemd coredump, journal,
+Nginx và Docker. Dump không xác định chủ sở hữu chỉ xem/dọn riêng; Docker chỉ
+thống kê, journal dùng vacuum hệ thống, Nginx chỉ dọn log đã xoay vòng. Backup,
+dữ liệu game và cấu hình không thuộc Dọn nhanh.

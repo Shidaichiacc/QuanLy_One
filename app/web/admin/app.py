@@ -2708,7 +2708,7 @@ app.config.update(
 )
 
 try:
-    APP_VERSION = open("/opt/QuanLy_One/VERSION", encoding="utf-8").read().strip() or "dev"
+    APP_VERSION = Path(PROJECT_ROOT, "VERSION").read_text(encoding="utf-8").strip() or "dev"
 except OSError:
     APP_VERSION = "dev"
 app.jinja_env.globals["app_version"] = APP_VERSION
@@ -2881,8 +2881,9 @@ def _github_release_status(current_version, force=False):
             latest_key = _version_key(tag)
             current_key = _version_key(current_version)
             assets = release.get("assets") if isinstance(release.get("assets"), list) else []
-            archive = next((asset for asset in assets if str(asset.get("name", "")).endswith(".tar.gz")), None)
-            checksum = next((asset for asset in assets if str(asset.get("name", "")).endswith(".sha256")), None)
+            archive_name = f"JXNative-{tag}.tar.gz"
+            archive = next((asset for asset in assets if isinstance(asset, dict) and asset.get("name") == archive_name), None)
+            checksum = next((asset for asset in assets if isinstance(asset, dict) and asset.get("name") == archive_name + ".sha256"), None)
             result = {
                 "status": "ok",
                 "repository": UPDATE_REPOSITORY,
@@ -2898,7 +2899,12 @@ def _github_release_status(current_version, force=False):
                 "checksum_url": str(checksum.get("browser_download_url") or "") if checksum else "",
                 "checksum_name": str(checksum.get("name") or "") if checksum else "",
             }
-            if not latest_key:
+            if latest_key:
+                expected_url = f"https://github.com/{UPDATE_REPOSITORY}/releases/download/{tag}/{archive_name}"
+                if result["download_url"] != expected_url or result["checksum_url"] != expected_url + ".sha256":
+                    result.update(status="error", message="Release chưa có đủ gói .tar.gz và SHA256 chính thức; hãy thử kiểm tra lại sau.")
+                    result.update(download_url="", checksum_url="")
+            if not latest_key or not re.fullmatch(r"v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?", tag):
                 result = {"status": "error", "message": f"Tag Release '{tag}' không đúng dạng vX.Y.Z."}
         except urllib.error.HTTPError as exc:
             if exc.code == 404:
@@ -3673,7 +3679,7 @@ def _write_system_update_status(state, percent, phase, message):
     os.replace(temporary, SYSTEM_UPDATE_STATUS)
 
 
-def _start_system_update(release):
+def _validate_system_update(release):
     if not os.path.isfile(SYSTEM_UPDATE_TOOL):
         raise RuntimeError("Thiếu tools/apply-update; hãy cập nhật thủ công lần này.")
     if sctl("is-active", "--quiet", SYSTEM_UPDATE_UNIT, timeout=5).returncode == 0:
@@ -3684,6 +3690,11 @@ def _start_system_update(release):
     expected = f"https://github.com/{UPDATE_REPOSITORY}/releases/download/v{latest}/JXNative-v{latest}.tar.gz"
     if archive_url != expected or checksum_url != expected + ".sha256":
         raise RuntimeError("Release chưa có đủ gói .tar.gz và SHA256 chính thức.")
+    return latest, archive_url, checksum_url
+
+
+def _start_system_update(release):
+    latest, archive_url, checksum_url = _validate_system_update(release)
     os.chmod(SYSTEM_UPDATE_TOOL, 0o755)
     sctl("reset-failed", SYSTEM_UPDATE_UNIT, timeout=10)
     _write_system_update_status("queued", 1, "Đã nhận yêu cầu", f"Chuẩn bị cập nhật lên v{latest}")
@@ -3779,7 +3790,11 @@ def system_update_start():
         return jsonify(error=conflict), 409
     release = _github_release_status(APP_VERSION, force=True)
     if release.get("status") != "ok" or not release.get("available"):
-        return jsonify(error="Không còn bản cập nhật mới hơn phiên bản đang dùng."), 409
+        return jsonify(error=release.get("message") or "Không còn bản cập nhật mới hơn phiên bản đang dùng."), 409
+    try:
+        _validate_system_update(release)
+    except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+        return jsonify(error=str(exc)), 409
     running = [unit for unit, _label in COMPONENTS if unit_active(unit)]
     if running and request.form.get("stop_server") != "1":
         return jsonify(error="Server đang chạy; cần Stop All trước khi cập nhật.",

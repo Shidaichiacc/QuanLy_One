@@ -1,6 +1,11 @@
 # Lịch sử phiên bản
 
-## Chưa phát hành
+## v1.3.5
+
+- Làm lại quản lý dung lượng thành trang dọn log/dump gọn: thống kê log server, crash/dump, log QuanLy One và dịch vụ; nút Dọn nhanh chọn giữ 1 ngày/7 ngày hoặc dọn tất cả, xem trước rồi xác nhận.
+- Bổ sung Apport, systemd coredump, journal, log Nginx/Docker; giữ file đang dùng, backup và dữ liệu game. Journal dọn bằng công cụ hệ thống; Docker chỉ thống kê. Dump chưa xác định thuộc ứng dụng không tự đưa vào Dọn nhanh.
+- Cập nhật GitHub chọn đúng cặp asset theo tag, kiểm tra sẵn sàng trước Stop All; worker kiểm tra nội dung gói/VERSION và trạng thái game trước giải nén, khôi phục số VERSION cũ nếu cài lỗi để có thể thử lại (không phải rollback toàn bộ).
+- Quy trình Release chạy kiểm thử, kiểm tra gói, bỏ backup mã nguồn và các file .env riêng; chỉ công bố sau khi upload đủ asset, không ghi đè Release có sẵn.
 
 - Thêm nút `!!!` dừng khẩn cấp trên Bảng điều khiển: luôn khả dụng, cưỡng bức dừng sáu thành phần game, kết thúc helper Start/Reload và xóa trạng thái khóa bị kẹt.
 - Tự phát hiện tiến trình Start All/Reload đã mất trong khi file trạng thái còn ghi `starting`; sau 10 giây Web báo lỗi và tự mở khóa điều khiển.

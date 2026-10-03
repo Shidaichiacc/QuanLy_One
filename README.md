@@ -3,7 +3,7 @@
 Web quản trị JX trên Ubuntu: quản lý nhiều phiên bản server, Start/Stop/Reload,
 Console realtime, MySQL, MSSQL, backup/restore, MOD và Website công khai.
 
-Phiên bản ổn định hiện tại: **v1.3.4**
+Phiên bản ổn định hiện tại: **v1.3.5**
 Mã nguồn và bản phát hành: <https://github.com/Shidaichiacc/QuanLy_One>
 
 > Gói JXNative không chứa server game. Sau khi cài Web và database, hãy đưa
@@ -49,10 +49,10 @@ sudo bash install.sh
 
 ```bash
 cd /opt
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.4/JXNative-v1.3.4.tar.gz
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.4/JXNative-v1.3.4.tar.gz.sha256
-sudo sha256sum -c JXNative-v1.3.4.tar.gz.sha256
-sudo tar -xzf JXNative-v1.3.4.tar.gz -C /opt
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.5/JXNative-v1.3.5.tar.gz
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.5/JXNative-v1.3.5.tar.gz.sha256
+sudo sha256sum -c JXNative-v1.3.5.tar.gz.sha256
+sudo tar -xzf JXNative-v1.3.5.tar.gz -C /opt
 cd /opt/QuanLy_One
 sudo bash install.sh
 ```
@@ -217,19 +217,21 @@ sudo /opt/QuanLy_One/tools/admin-login-lock unlock-all
 
 ## 9. Tạo GitHub Release
 
-Workflow `.github/workflows/release.yml` tự kiểm tra `VERSION`, đóng gói file
-`.tar.gz`, tạo SHA256 và tải cả hai lên GitHub Release khi có tag `v*`.
+Workflow `.github/workflows/release.yml` kiểm tra `VERSION`, chạy kiểm thử,
+đóng gói và tải đủ `.tar.gz` + SHA256 lên bản nháp rồi mới công bố khi có tag `v*`.
+Chỉ push nhánh `main` chưa tạo bản cập nhật cho máy người dùng.
+Nếu tag/Release đã tồn tại, dùng phiên bản mới; không ghi đè asset đã phát hành.
 
 ```bash
 cd /duong-dan/QuanLy_One
-git init
+git status --short
+git diff --check
+# Chỉ stage các thay đổi mã nguồn đã kiểm tra.
 git add .
-git commit -m "Release v1.3.4"
-git branch -M main
-git remote add origin https://github.com/Shidaichiacc/QuanLy_One.git
-git push -u origin main
-git tag v1.3.4
-git push origin v1.3.4
+git commit -m "Release v1.3.5"
+git push origin main
+git tag -a v1.3.5 -m "Release v1.3.5"
+git push origin v1.3.5
 ```
 
 Tag phải đúng bằng chữ `v` cộng nội dung file `VERSION`. Không commit server
@@ -238,8 +240,8 @@ game, `.env`, database đang chạy, bản backup, log hoặc môi trường Pyt
 Để tự đóng gói trên máy:
 
 ```bash
-cd /opt/QuanLy_One
-sudo bash tools/build-release
+cd /duong-dan/QuanLy_One  # thư mục Git mã nguồn, không dùng bản cài đang chạy
+bash tools/build-release
 ```
 
 Kết quả gồm `/opt/JXNative-vX.Y.Z.tar.gz` và file `.sha256` tương ứng.

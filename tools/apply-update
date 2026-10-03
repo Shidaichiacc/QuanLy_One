@@ -101,7 +101,9 @@ def download(url, destination, start_percent, end_percent, phase):
 
 def verify_checksum(archive, checksum):
     text = checksum.read_text(encoding="utf-8", errors="replace")
-    match = re.search(r"\b([0-9a-fA-F]{64})\b", text)
+    entries = [re.fullmatch(r"([0-9a-fA-F]{64}) [ *](.+)", line.strip()) for line in text.splitlines()]
+    matches = [entry for entry in entries if entry and entry.group(2) == archive.name]
+    match = matches[0] if len(matches) == 1 else None
     if not match:
         raise ValueError("File SHA256 không chứa mã kiểm tra hợp lệ")
     digest = hashlib.sha256()
@@ -112,17 +114,61 @@ def verify_checksum(archive, checksum):
         raise ValueError("SHA256 không khớp; gói tải về có thể bị lỗi")
 
 
-def validate_archive(archive):
+PROTECTED_PATHS = (
+    ".git", "data/state", "data/uploads", "data/backups-code",
+    "data/database/mysql/data", "data/database/mssql/data", "data/database/backups",
+    "JX_Servers/Active", "JX_Servers/JX_Versions", "app/web/admin/venv",
+)
+REQUIRED_FILES = {
+    "VERSION", ".env.example", "install.sh", "update.sh", "tools/apply-update",
+    "app/web/admin/app.py", "deploy/docker-compose.yml",
+    "data/database/seed/account_tong.bak", "data/database/seed/server1.sql",
+}
+GAME_UNITS = ("jxgame", "jxs3relay", "jxbishop", "jxgoddess", "jxrelaypay", "jxpaysys")
+
+
+def validate_archive(archive, version=None):
     with tarfile.open(archive, "r:gz") as bundle:
         members = bundle.getmembers()
-        if not members:
-            raise ValueError("Gói cập nhật trống")
+        regular_files = set()
+        seen = set()
         for member in members:
             path = PurePosixPath(member.name)
             if path.is_absolute() or ".." in path.parts or not path.parts or path.parts[0] != "QuanLy_One":
                 raise ValueError("Gói cập nhật có đường dẫn không an toàn: " + member.name)
-            if member.isdev():
-                raise ValueError("Gói cập nhật chứa thiết bị đặc biệt")
+            relative = path.relative_to("QuanLy_One").as_posix()
+            if relative in seen:
+                raise ValueError("Gói cập nhật có đường dẫn trùng: " + member.name)
+            seen.add(relative)
+            if any(part == ".env" or (part.startswith(".env.") and part != ".env.example") for part in path.parts):
+                raise ValueError("Gói cập nhật chứa cấu hình riêng: " + member.name)
+            if any(relative == root or relative.startswith(root + "/") for root in PROTECTED_PATHS):
+                if not member.isdir() and not (member.isfile() and path.name == ".gitkeep" and member.size == 0):
+                    raise ValueError("Gói cập nhật chứa dữ liệu vận hành: " + member.name)
+            if member.issym():
+                if relative != "JX_Servers/Runtime/config" or member.linkname != "../Config":
+                    raise ValueError("Gói cập nhật có symlink không được phép: " + member.name)
+            elif not (member.isdir() or member.isfile()):
+                raise ValueError("Gói cập nhật chứa loại file không được phép: " + member.name)
+            if member.isfile():
+                regular_files.add(relative)
+        missing = REQUIRED_FILES - regular_files
+        if missing:
+            raise ValueError("Gói cập nhật thiếu file: " + ", ".join(sorted(missing)))
+        version_file = bundle.extractfile("QuanLy_One/VERSION")
+        packaged_version = version_file.read(128).decode("utf-8").strip()
+        if not VERSION_RE.fullmatch(packaged_version) or (version and packaged_version != version):
+            raise ValueError("VERSION trong gói không khớp phiên bản yêu cầu")
+
+
+def require_stopped_game():
+    # Kiểm tra lại sau khi tải; game có thể được bật trong thời gian chờ tải.
+    for unit in GAME_UNITS:
+        result = subprocess.run(
+            ["systemctl", "show", unit, "--property=ActiveState", "--value"],
+            capture_output=True, text=True, timeout=10, check=False)
+        if result.returncode != 0 or result.stdout.strip() not in ("inactive", "failed"):
+            raise RuntimeError("Hãy Stop All trước khi giải nén cập nhật: " + unit)
 
 
 def backup_changed_shared_mods(archive):
@@ -153,7 +199,7 @@ def backup_changed_shared_mods(archive):
 
 def extract_archive(archive):
     with tarfile.open(archive, "r:gz") as bundle:
-        bundle.extractall("/opt", filter="data")
+        bundle.extractall(PROJECT_ROOT.parent, filter="data")
 
 
 def run_update_script():
@@ -182,8 +228,12 @@ def main():
     try:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
-        fail("Đang có một tiến trình cập nhật khác")
+        lock.close()
+        raise SystemExit("Đang có một tiến trình cập nhật khác")
+    original_version = None
+    extraction_started = False
     try:
+        original_version = (PROJECT_ROOT / "VERSION").read_bytes()
         archive_name = validate_release(version, repository, archive_url, checksum_url)
         LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         LOG_FILE.write_text("", encoding="utf-8")
@@ -197,9 +247,11 @@ def main():
             write_status("working", 60, "Đang kiểm tra SHA256", "Xác minh tính toàn vẹn của gói")
             verify_checksum(archive, checksum)
             write_status("working", 68, "Đang kiểm tra gói", "Kiểm tra đường dẫn và nội dung bản phát hành")
-            validate_archive(archive)
+            validate_archive(archive, version)
+            require_stopped_game()
             backup_changed_shared_mods(archive)
             write_status("working", 75, "Đang giải nén", "Cài file chương trình mới vào /opt/QuanLy_One")
+            extraction_started = True
             extract_archive(archive)
             write_status("working", 82, "Đang chạy update.sh", "Web sẽ mất kết nối trong thời gian ngắn")
             if run_update_script() != 0:
@@ -209,7 +261,10 @@ def main():
             raise RuntimeError(f"VERSION sau cập nhật là {installed}, dự kiến {version}")
         log_line(f"Cập nhật v{version} hoàn tất")
         write_status("success", 100, "Cập nhật hoàn tất", f"JXNative đã lên v{version}")
-    except (OSError, ValueError, RuntimeError, tarfile.TarError, urllib.error.URLError) as exc:
+    except (OSError, ValueError, RuntimeError, tarfile.TarError, urllib.error.URLError, subprocess.TimeoutExpired) as exc:
+        if extraction_started:
+            # Giữ khả năng thử lại; đây không phải rollback toàn bộ mã/cấu hình.
+            (PROJECT_ROOT / "VERSION").write_bytes(original_version)
         fail(str(exc))
     finally:
         try:

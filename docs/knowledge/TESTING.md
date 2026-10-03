@@ -35,14 +35,16 @@ và quyền truy cập. Không gọi thao tác thật nếu có thể mock ranh 
 Chạy `bash -n` trên đúng script shell đã sửa. Với nhóm script hiện tại:
 
 ```bash
-bash -n install.sh update.sh tools/build-release \
+for script in install.sh update.sh tools/build-release \
   JX_Servers/Runtime/jx-ensure-running \
   JX_Servers/Runtime/jx-wait-ip \
   JX_Servers/Runtime/jx-wait-port \
   JX_Servers/Runtime/s3relay-pty-wrapper \
   JX_Servers/Scripts/activate-server \
   JX_Servers/Scripts/start-game-stack \
-  JX_Servers/Scripts/update-server-ip
+  JX_Servers/Scripts/update-server-ip; do
+  bash -n "$script" || exit 1
+done
 ```
 
 ## Cấu hình dịch vụ
@@ -84,3 +86,14 @@ journalctl -u quanly-public -n 50 --no-pager
 Kiểm tra HTTP và chức năng đã sửa. Nếu không chủ ý tác động game, xác nhận sáu
 service game vẫn giữ trạng thái trước triển khai.
 
+
+## Regression dọn log và cập nhật Release
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+Cần dependencies trong `app/web/admin/requirements.txt`. Tests dùng fixture tạm,
+mock systemd/Docker, không chạy `update.sh` hay dọn log thật. Bao phủ preview/xác
+nhận, giữ dữ liệu, chọn đúng asset, xác thực Web/CSRF/mật khẩu/Stop All, checksum,
+archive sai, kiểm tra game đã dừng và giữ VERSION cũ khi cập nhật lỗi.

@@ -1111,11 +1111,9 @@ SETUP_PAGE = r"""
 <div class="ui-modal" id="databasePasswordModal" aria-hidden="true"><div class="ui-dialog wide"><div class="ui-head"><h2>🔐 Đổi mật khẩu database</h2><button type="button" class="mut modal-close">✕</button></div><form id="databasePasswordForm" method="post" action="{{url_for('manager_ext.rotate_database_passwords')}}"><input type="hidden" name="csrf_token" value="{{csrf}}"><div class="ui-body"><div class="db-warning">Bắt buộc Stop All. Hệ thống sẽ backup trước, đổi mật khẩu thật trong MySQL/MSSQL, mã hóa và đồng bộ các file JX, rồi kiểm tra kết nối. Nếu lỗi sẽ tự rollback.</div><label>Mật khẩu Admin hiện tại<input type="password" name="admin_password" autocomplete="current-password" required></label><div class="db-grid"><label>Mật khẩu MySQL mới<input type="password" name="mysql_password" autocomplete="new-password" required minlength="12" maxlength="20"></label><label>Nhập lại MySQL<input type="password" name="mysql_confirm" autocomplete="new-password" required minlength="12" maxlength="20"></label><label>Mật khẩu MSSQL mới<input type="password" name="mssql_password" autocomplete="new-password" required minlength="12" maxlength="20"></label><label>Nhập lại MSSQL<input type="password" name="mssql_confirm" autocomplete="new-password" required minlength="12" maxlength="20"></label></div><p class="muted">12–20 ký tự, có chữ hoa, chữ thường, số và một ký tự @ _ ! . hoặc -.</p><button type="button" class="mut" id="generateDatabasePasswords">Tạo hai mật khẩu mạnh</button><div class="import-progress" id="databasePasswordProgress" hidden><div class="progress-line"><div><b id="databasePasswordPhase">Đang chuẩn bị</b><span id="databasePasswordPercent">0%</span></div><progress id="databasePasswordBar" max="100" value="0"></progress></div><p class="import-progress-message" id="databasePasswordMessage"></p></div></div><div class="ui-foot"><button type="button" class="mut modal-close">Hủy</button><button id="databasePasswordSubmit">Backup và đổi mật khẩu</button></div></form></div></div>
 <div class="ui-modal" id="importModal" aria-hidden="true"><div class="ui-dialog wide"><div class="ui-head"><h2>＋ Thêm phiên bản server</h2><button type="button" class="mut modal-close">✕</button></div><div class="ui-body"><div class="import-tabs"><button type="button" class="import-tab active" data-import="upload">⬆ Upload file</button><button type="button" class="import-tab mut" data-import="github">🐙 GitHub</button></div><div class="import-panel active" data-panel="upload"><form id="serverUploadForm" method="post" action="{{url_for('manager_ext.upload')}}" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{csrf}}"><input type="hidden" name="job_id"><label>Tên phiên bản<input name="server_name" placeholder="Ví dụ: jx-2026-08" required></label><label>File server (.zip, .tgz, .tar.gz)<input type="file" name="archive" accept=".zip,.tgz,.gz" required></label><button id="serverUploadButton">Upload và giải nén</button><div class="import-progress" id="serverUploadProgress" hidden><div class="progress-line"><div><b>Tải file lên máy chủ</b><span id="uploadPercent">0%</span></div><progress id="uploadBar" max="100" value="0"></progress></div><div class="progress-line"><div><b id="extractPhase">Chờ giải nén</b><span id="extractPercent">0%</span></div><progress id="extractBar" max="100" value="0"></progress></div><p class="import-progress-message" id="uploadMessage">Đang chuẩn bị…</p></div></form></div><div class="import-panel" data-panel="github"><form method="post" action="{{url_for('manager_ext.clone_github')}}"><input type="hidden" name="csrf_token" value="{{csrf}}"><div class="row"><label>Tên phiên bản<input name="server_name" placeholder="Ví dụ: jx-main" required></label><label>Nhánh<input name="branch" placeholder="main"></label></div><label>Link GitHub<input name="github_url" type="url" placeholder="https://github.com/tai-khoan/repository.git" required></label><button>Tải từ GitHub</button></form></div></div></div></div>
 {% else %}
-{% if log_view == 'storage' %}<div class="center-summary"><div class="summary-item"><small>Server</small><b>{{active_name or 'Chưa chọn'}}</b></div><div class="summary-item"><small>Log game</small><b class="storage-total">{{game_log_size}}</b></div><div class="summary-item"><small>Journal</small><b class="storage-total">{{journal_size}}</b></div><div class="summary-item"><small>Ổ đĩa còn trống</small><b class="storage-total">{{disk_free}}</b></div></div>{% endif %}
 <div class="sub-tabs"><a class="sub-tab {{'active' if log_view=='viewer' else ''}}" href="{{url_for('manager_ext.setup',tab='logs',view='viewer')}}">Xem log</a><a class="sub-tab {{'active' if log_view=='storage' else ''}}" href="{{url_for('manager_ext.setup',tab='logs',view='storage')}}">Quản lý dung lượng</a></div>
 {% if log_view == 'viewer' %}<section class="card log-viewer-card"><div class="section-head"><div><h2>📜 Log server đầy đủ</h2><span class="muted">Chọn nguồn và bấm Tải log khi cần. Trang này không tự đọc log và không chạy realtime.</span></div><button type="button" class="mut" id="historyFullscreen">⛶ Toàn màn hình</button></div><div class="log-toolbar-v116"><label>Nguồn<select id="historySource">{% for key,label in history_log_sources %}<option value="{{key}}">{{label}}</option>{% endfor %}</select></label><label>Số dòng<select id="historyTail"><option value="1000">1.000</option><option value="3000">3.000</option><option value="all">Tất cả</option></select></label><label class="toggle-line"><input type="checkbox" id="historyTimestamps"> Hiện thời gian</label><button type="button" id="historyRefresh">Tải log</button><button type="button" class="mut" id="historyBottom">↓ Cuối log</button></div><p class="muted">Tất cả hiển thị tối đa 50.000 dòng gần nhất để bảo vệ trình duyệt.</p><div class="history-log-v116" id="historyLog">Chưa tải log. Chọn nguồn và bấm “Tải log”.</div></section>
-{% else %}<div class="storage-list" id="log-management"><section class="card"><div class="section-head"><div><h2>🧹 Log game</h2><span class="muted">Chỉ xóa file trong server active.</span></div>{% if active_path %}<button type="button" class="mut browse-folder" data-mode="logs" data-current=".">＋ Thêm thư mục</button>{% endif %}</div>{% if active_path %}{% for row in game_logs %}<div class="storage-row"><div><b>{{row.label}}{% if row.custom %} <span class="pill">Tùy chỉnh</span>{% endif %}</b><code title="{{row.path}}">{{row.path}}</code><span class="muted">{{row.files}} file · {{row.size}}</span></div><div class="storage-actions"><form method="post" action="{{url_for('manager_ext.delete_game_log')}}" data-confirm="Xóa toàn bộ file trong {{row.path}}?"><input type="hidden" name="csrf_token" value="{{csrf}}"><input type="hidden" name="path" value="{{row.path}}"><button class="err" {{'disabled' if not row.exists else ''}}>Xóa</button></form>{% if row.custom %}<form method="post" action="{{url_for('manager_ext.remove_game_log_path')}}"><input type="hidden" name="csrf_token" value="{{csrf}}"><input type="hidden" name="path" value="{{row.path}}"><button class="mut" title="Bỏ khỏi danh sách">−</button></form>{% endif %}</div></div>{% endfor %}<form method="post" action="{{url_for('manager_ext.delete_all_game_logs')}}" style="margin-top:14px" data-confirm="XÓA TẤT CẢ file trong các thư mục log game đang liệt kê?"><input type="hidden" name="csrf_token" value="{{csrf}}"><button class="err">Xóa tất cả log game</button></form>{% else %}<p class="danger-note">Chưa kích hoạt server.</p>{% endif %}</section>
-<section class="card"><h2>🖥️ Log hệ thống</h2><div class="storage-row"><div><b>Journal Ubuntu</b><code>/var/log/journal · /run/log/journal</code><span class="muted">{{system_logs.persistent.size}} + {{system_logs.runtime.size}} · giới hạn 100 MB trên ổ</span></div><form method="post" action="{{url_for('manager_ext.clean_system_logs')}}" data-confirm="Dọn journal Ubuntu xuống khoảng 100 MB?"><input type="hidden" name="csrf_token" value="{{csrf}}"><button class="err" {{'disabled' if not journal_needs_cleanup else ''}}>{{'Chưa cần dọn' if not journal_needs_cleanup else 'Dọn xuống 100 MB'}}</button></form></div><div class="storage-row"><div><b>Journal 6 thành phần JXNative</b><code>/run/log/journal/*.jxnative</code><span class="muted">{{system_logs.jx_runtime.size}} · chỉ trong RAM · tự xoay tối đa 64 MB</span></div><span class="pill on">Tự quản lý</span></div><div class="storage-row"><div><b>Log thao tác JXNative</b><code>game-start.log · game-reload.log · activity.jsonl</code><span class="muted">{{system_logs.state.size}}</span></div><form method="post" action="{{url_for('manager_ext.clear_operation_logs')}}" data-confirm="Làm trống log Start All, Reload và Nhật ký hoạt động?"><input type="hidden" name="csrf_token" value="{{csrf}}"><button class="err" {{'disabled' if not system_logs.state.bytes else ''}}>Làm trống</button></form></div>{% for row in system_logs.docker %}<div class="storage-row"><div><b>Docker {{row.label}}</b><code>{{row.path or row.container}}</code><span class="muted">{{row.size}}</span></div><span class="pill on">Tự xoay 20 MB × 5</span></div>{% endfor %}</section></div>{% endif %}
+{% else %}{% include 'storage.html' %}{% endif %}
 <form method="post" action="{{url_for('manager_ext.add_game_log_path')}}" id="addLogFolderForm" hidden><input type="hidden" name="csrf_token" value="{{csrf}}"><input type="hidden" name="path"></form>
 {% endif %}
 <div class="ui-modal" id="folderModal" aria-hidden="true"><div class="ui-dialog"><div class="ui-head"><h2 id="folderTitle">📁 Chọn thư mục</h2><button type="button" class="mut modal-close">✕</button></div><div class="folder-location"><b>Vị trí:</b> <code id="folderLocation">--</code></div><div class="folder-list" id="folderList"><div class="folder-empty">Đang tải...</div></div><div class="ui-foot"><button type="button" class="mut" id="folderBack">← Thư mục cha</button><button type="button" class="ok" id="folderSelect">Sử dụng thư mục này</button></div></div></div>
@@ -1488,8 +1486,8 @@ def register_manager_extensions(app):
         # Dung lượng log có thể phải đi qua hàng nghìn file. Chỉ tính khi người dùng
         # thực sự mở màn hình quản lý dung lượng, không làm chậm tab phiên bản/xem log.
         needs_storage = active_tab == "logs" and log_view == "storage"
-        game_logs = _game_log_rows() if active and needs_storage else []
-        system_logs = _system_log_summary() if needs_storage else {
+        game_logs = []  # Storage inventory loads through the dedicated API.
+        system_logs = {
             "persistent": {"bytes": 0, "size": "—"},
             "runtime": {"bytes": 0, "size": "—"},
             "jx_runtime": {"bytes": 0, "size": "—"},
@@ -1820,7 +1818,7 @@ def register_manager_extensions(app):
             flash("Đã thêm thư mục log: " + relative, "ok")
         except Exception as exc:
             flash("Không thêm được thư mục log: " + str(exc), "err")
-        return redirect(url_for("manager_ext.setup", tab="logs") + "#log-management")
+        return redirect(url_for("manager_ext.setup", tab="logs", view="storage"))
 
     @blueprint.route("/server-setup/logs/game/remove", methods=["POST"])
     def remove_game_log_path():
@@ -1846,105 +1844,30 @@ def register_manager_extensions(app):
             flash("Đã bỏ khỏi danh sách; không xóa thư mục hay file: " + relative, "ok")
         except Exception as exc:
             flash("Không bỏ được đường dẫn: " + str(exc), "err")
-        return redirect(url_for("manager_ext.setup", tab="logs") + "#log-management")
+        return redirect(url_for("manager_ext.setup", tab="logs", view="storage"))
 
     @blueprint.route("/server-setup/logs/game/delete", methods=["POST"])
     def delete_game_log():
-        if not _valid_csrf():
-            flash("Phiên không hợp lệ", "err")
-            return redirect(url_for("manager_ext.setup"))
-        try:
-            relative = _normalize_log_relative(request.form.get("path", ""))
-            allowed = {path for path, _label, _custom in _configured_game_log_directories()}
-            if relative not in allowed:
-                raise ValueError("Đường dẫn không có trong danh sách quản lý")
-            path = _active_log_path(relative, require_exists=True)
-            removed, released, errors = _delete_directory_files(path)
-            message = "Đã xóa %d file trong %s, giải phóng %s." % (removed, relative, _format_size(released))
-            if errors:
-                flash(message + " Một số file lỗi: " + "; ".join(errors[:3]), "err")
-            else:
-                flash(message, "ok")
-        except Exception as exc:
-            flash("Không xóa được log game: " + str(exc), "err")
-        return redirect(url_for("manager_ext.setup", tab="logs") + "#log-management")
+        flash("Mở Quản lý dung lượng để chọn thời gian, xem trước và xác nhận xóa.", "err")
+        return redirect(url_for("manager_ext.setup", tab="logs", view="storage"))
 
     @blueprint.route("/server-setup/logs/game/delete-all", methods=["POST"])
     def delete_all_game_logs():
-        if not _valid_csrf():
-            flash("Phiên không hợp lệ", "err")
-            return redirect(url_for("manager_ext.setup"))
-        removed = 0
-        released = 0
-        errors = []
-        try:
-            for relative, _label, _custom in _configured_game_log_directories():
-                try:
-                    path = _active_log_path(relative, require_exists=True)
-                except ValueError:
-                    continue
-                count, size, current_errors = _delete_directory_files(path)
-                removed += count
-                released += size
-                errors.extend(current_errors)
-            message = "Đã xóa %d file trong tất cả thư mục log game, giải phóng %s." % (removed, _format_size(released))
-            flash(message + ((" Lỗi: " + "; ".join(errors[:3])) if errors else ""), "err" if errors else "ok")
-        except Exception as exc:
-            flash("Không xóa được toàn bộ log game: " + str(exc), "err")
-        return redirect(url_for("manager_ext.setup", tab="logs") + "#log-management")
+        flash("Mở Quản lý dung lượng để chọn thời gian, xem trước và xác nhận xóa.", "err")
+        return redirect(url_for("manager_ext.setup", tab="logs", view="storage"))
 
     @blueprint.route("/server-setup/logs/system/clean", methods=["POST"])
     def clean_system_logs():
-        if not _valid_csrf():
-            flash("Phiên không hợp lệ", "err")
-            return redirect(url_for("manager_ext.setup"))
-        errors = []
-        released = 0
-        before = _system_log_summary()
-        try:
-            rotate = subprocess.run(["journalctl", "--rotate"], capture_output=True, text=True,
-                                    timeout=30, check=False)
-            vacuum = subprocess.run(["journalctl", "--vacuum-size=100M"], capture_output=True, text=True,
-                                    timeout=60, check=False)
-            if rotate.returncode != 0:
-                errors.append((rotate.stderr or rotate.stdout or "journalctl --rotate lỗi").strip())
-            if vacuum.returncode != 0:
-                errors.append((vacuum.stderr or vacuum.stdout or "journalctl --vacuum-size lỗi").strip())
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            errors.append("Journal: " + str(exc))
-        after = _system_log_summary()
-        journal_before = before["persistent"]["bytes"] + before["runtime"]["bytes"]
-        journal_after = after["persistent"]["bytes"] + after["runtime"]["bytes"]
-        released += max(0, journal_before - journal_after)
-        message = "Đã dọn journal xuống khoảng 100 MB, giải phóng khoảng %s. Log Docker tiếp tục tự xoay vòng." % _format_size(released)
-        flash(message + ((" Lỗi: " + "; ".join(errors[:3])) if errors else ""), "err" if errors else "ok")
-        return redirect(url_for("manager_ext.setup", tab="logs") + "#log-management")
+        flash("Mở Quản lý dung lượng để chọn thời gian, xem trước và xác nhận xóa.", "err")
+        return redirect(url_for("manager_ext.setup", tab="logs", view="storage"))
 
     @blueprint.route("/server-setup/logs/operations/clear", methods=["POST"])
     def clear_operation_logs():
-        if not _valid_csrf():
-            flash("Phiên không hợp lệ", "err")
-            return redirect(url_for("manager_ext.setup", tab="logs"))
-        released = 0
-        errors = []
-        for status_name in ("game-start.status", "game-reload.status"):
-            try:
-                if (STATE_ROOT / status_name).read_text(encoding="utf-8").splitlines()[0] == "starting":
-                    flash("Không làm trống log khi Start All hoặc Reload đang chạy", "err")
-                    return redirect(url_for("manager_ext.setup", tab="logs") + "#log-management")
-            except (OSError, IndexError):
-                pass
-        for path in JXNATIVE_STATE_LOGS:
-            try:
-                if path.is_file() and not path.is_symlink():
-                    released += path.stat().st_size
-                    with path.open("wb"):
-                        pass
-            except OSError as exc:
-                errors.append(path.name + ": " + str(exc))
-        message = "Đã làm trống log Start All, Reload và Nhật ký hoạt động, giải phóng %s." % _format_size(released)
-        flash(message + ((" Lỗi: " + "; ".join(errors[:3])) if errors else ""), "err" if errors else "ok")
-        return redirect(url_for("manager_ext.setup", tab="logs") + "#log-management")
+        flash("Mở Quản lý dung lượng để xem trước và xác nhận dọn log.", "err")
+        return redirect(url_for("manager_ext.setup", tab="logs", view="storage"))
+
+    from storage_manager import register_storage_routes
+    app.extensions["storage_manager"] = register_storage_routes(blueprint, sys.modules[__name__])
 
     app.jinja_env.globals["manager_setup_url"] = lambda: url_for("manager_ext.setup")
     app.jinja_env.globals["manager_account_url"] = lambda: url_for("manager_ext.account_settings")

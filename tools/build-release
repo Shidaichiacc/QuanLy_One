@@ -8,7 +8,14 @@ version=$(cat "$project_root/VERSION")
 destination=${1:-/opt/JXNative-v${version}.tar.gz}
 checksum_path="${destination}.sha256"
 
-tar -czf "$destination" \
+# Bản mẫu đi cùng mã nguồn; các biến thể .env riêng tuyệt đối không đóng gói.
+extra_excludes=()
+for env_file in "$project_root"/.env.*; do
+    [ "$(basename "$env_file")" = ".env.example" ] && continue
+    extra_excludes+=("--exclude=${project_name}/$(basename "$env_file")")
+done
+
+tar -czf "$destination" "${extra_excludes[@]}" \
     --transform="s#^${project_name}#QuanLy_One#" \
     --exclude="${project_name}/.git" \
     --exclude="${project_name}/.env" \
@@ -20,6 +27,9 @@ tar -czf "$destination" \
     --exclude="${project_name}/JX_Servers/MOD/*.bak*" \
     --exclude="${project_name}/JX_Servers/MOD/*.user-*" \
     --exclude="${project_name}/JX_Servers/Runtime/*.bak*" \
+    --exclude="${project_name}/data/backups-code" \
+    --exclude="${project_name}/JXNative-v*.tar.gz*" \
+    --exclude='*.log' \
     --exclude="${project_name}/data/state/*" \
     --exclude="${project_name}/data/uploads/*" \
     --exclude="${project_name}/data/database/mysql/data/*" \
@@ -30,6 +40,17 @@ tar -czf "$destination" \
     --exclude="${project_name}/app/web/assets/legacy/**/*.logs" \
     --exclude="${project_name}/app/web/assets/legacy/**/.htaccess" \
     -C "$project_parent" "$project_name"
+# Từ chối gói sai cấu trúc/dính runtime trước khi tạo checksum.
+python3 - "$project_root" "$destination" "$version" <<'PYVALIDATE'
+import importlib.machinery
+import importlib.util
+import sys
+loader = importlib.machinery.SourceFileLoader("release_validator", sys.argv[1] + "/tools/apply-update")
+spec = importlib.util.spec_from_loader(loader.name, loader)
+module = importlib.util.module_from_spec(spec)
+loader.exec_module(module)
+module.validate_archive(sys.argv[2], sys.argv[3])
+PYVALIDATE
 chmod 0644 "$destination"
 (
     cd "$(dirname "$destination")"

@@ -32,7 +32,8 @@ git push origin vX.Y.Z
 ```
 
 `.github/workflows/release.yml` yêu cầu tag `vX.Y.Z` khớp nội dung `VERSION`, chạy
-`tools/build-release`, tạo GitHub Release và upload:
+`unittest`, dùng `tools/build-release` xác minh cấu trúc gói, tạo GitHub Release
+nháp, upload đủ hai asset rồi công bố:
 
 - `JXNative-vX.Y.Z.tar.gz`
 - `JXNative-vX.Y.Z.tar.gz.sha256`
@@ -48,3 +49,20 @@ git push origin vX.Y.Z
 Không force hoặc di chuyển tag đã công bố. Nếu Release sai, dừng lại, báo trạng thái
 và chọn cách sửa có lịch sử rõ ràng; không tự xóa dấu vết phát hành.
 
+
+## Kiểm tra cơ chế cập nhật từ v1.3.5
+
+- Chọn đúng `JXNative-vX.Y.Z.tar.gz` và `.sha256` theo tag; thiếu/sai asset phải
+  báo lỗi trước khi đề nghị Stop All. Không dùng archive source tự sinh của GitHub.
+- Worker xác minh checksum theo đúng tên file, VERSION và file bắt buộc trong gói;
+  từ chối đường dẫn nguy hiểm, secret và dữ liệu runtime trước khi giải nén.
+- Kiểm tra lại sáu dịch vụ game đã dừng sau khi tải. Kiểm tra này không thay thế
+  Stop All an toàn từ Web; không bật game trong khi cập nhật.
+- Nếu cài lỗi sau giải nén, giữ số VERSION cũ để có thể thử lại. Mã/cấu hình đã
+  giải nén chưa được rollback; cần đọc log lỗi trước khi thử lại.
+- Bản cài v1.3.3/v1.3.4 đã có updater nên nhận được gói v1.3.5 qua Web. Các kiểm
+  tra mới của worker chỉ có hiệu lực từ lần cập nhật tiếp theo sau khi đã cài v1.3.5.
+- Build từ repository nguồn; gói không chứa `data/backups-code`, `.env` hay các
+  biến thể `.env.*` riêng (vẫn có `.env.example`).
+- Workflow không ghi đè Release đã tồn tại. Nếu upload/công bố lỗi để lại bản nháp,
+  kiểm tra asset và checksum trong bản nháp trước khi quyết định công bố thủ công.

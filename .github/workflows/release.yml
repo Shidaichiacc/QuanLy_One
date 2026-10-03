@@ -25,6 +25,16 @@ jobs:
             exit 1
           }
 
+      - name: Cai Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Kiem thu
+        run: |
+          python -m pip install -r app/web/admin/requirements.txt
+          python -m unittest discover -s tests -v
+
       - name: Dong goi va tao SHA256
         shell: bash
         run: |
@@ -39,6 +49,10 @@ jobs:
           set -euo pipefail
           archive="${RUNNER_TEMP}/JXNative-${GITHUB_REF_NAME}.tar.gz"
           checksum="${archive}.sha256"
-          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
-            gh release create "${GITHUB_REF_NAME}" --title "JXNative ${GITHUB_REF_NAME}" --generate-notes
-          gh release upload "${GITHUB_REF_NAME}" "$archive" "$checksum" --clobber
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "Release da ton tai; khong ghi de asset. Hay kiem tra Release tren GitHub." >&2
+            exit 1
+          fi
+          gh release create "${GITHUB_REF_NAME}" "$archive" "$checksum" \
+            --draft --verify-tag --title "JXNative ${GITHUB_REF_NAME}" --generate-notes
+          gh release edit "${GITHUB_REF_NAME}" --draft=false

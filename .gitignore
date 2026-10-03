@@ -3,6 +3,7 @@
 !.env.example
 
 # Dữ liệu vận hành và bí mật được tạo trên từng máy.
+data/backups-code/
 data/state/*
 !data/state/.gitkeep
 data/uploads/*
