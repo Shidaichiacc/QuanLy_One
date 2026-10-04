@@ -90,3 +90,14 @@ Từ v1.3.6, trang cập nhật luôn kiểm tra GitHub mới; cache phiên/serv
 phút và không giữ kết quả vô hạn trong sessionStorage. Nếu máy cũ bị lỗi nút
 cập nhật do JavaScript (v1.3.3–v1.3.5), cần sửa giao diện tại máy đó trước hoặc
 dùng hướng dẫn cập nhật thủ công sau Stop All. Gói v1.3.6 chứa bản sửa lâu dài.
+
+## Giữ cấu hình PaySys khi nâng cấp từ v1.3.7
+
+`JX_Servers/Config/mssql.ini` trong Git/gói là cấu hình mẫu cho cài mới. Mật khẩu
+trong bản đang chạy phải khớp `MSSQL_SA_PASSWORD` của `.env`. Updater giữ file
+trong `JX_Servers/Config` đã tồn tại và chỉ cài thêm file mới. `update.sh` đồng bộ
+lại mật khẩu PaySys từ `.env` trước khi báo thành công, vì updater của bản cũ
+có thể đã ghi đè cấu hình bằng mẫu trong gói. Việc này không đổi mật khẩu SQL.
+
+Sau cập nhật, kiểm tra đăng nhập MSSQL, cấu hình PaySys và Start All đủ sáu
+thành phần; chỉ thấy container healthy chưa đủ xác nhận game kết nối được.

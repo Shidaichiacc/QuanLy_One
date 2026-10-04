@@ -1,5 +1,12 @@
 # Lịch sử phiên bản
 
+## v1.3.7
+
+- Sửa cập nhật ghi đè mật khẩu MSSQL trong cấu hình PaySys khiến Start All dừng ở cổng 5002 dù database khỏe: giữ các file cấu hình máy đã tồn tại khi giải nén, và đồng bộ mật khẩu kết nối từ .env trong update.sh để tương thích updater cũ. Không đổi mật khẩu hoặc dữ liệu database.
+- Nút Cập nhật ngay trong popup mở xác nhận ngay trên trang cập nhật; từ trang khác chuyển tới đúng bước xác nhận.
+- Hiện thanh tiến độ ngay khi gửi yêu cầu, hiển thị bước chờ Stop All/tải/cài đặt và tự kết nối lại khi Web khởi động lại. Giữ thông báo thành công 100% tới khi người dùng bấm Hoàn tất; lỗi có thông báo và cho phép thử lại.
+- Kiểm thử Chromium bao phủ đúng nút trong popup, tiến độ tới 100%, thành công giữ nguyên và lỗi worker.
+
 ## v1.3.6
 
 - Sửa JavaScript của trang cập nhật bị lỗi xuống dòng khiến nút Cập nhật ngay không mở hộp nhập mật khẩu.

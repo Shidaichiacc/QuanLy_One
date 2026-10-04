@@ -198,8 +198,18 @@ def backup_changed_shared_mods(archive):
 
 
 def extract_archive(archive):
+    def preserve_machine_config(member, destination):
+        checked = tarfile.data_filter(member, destination)
+        relative = PurePosixPath(member.name).relative_to("QuanLy_One")
+        if relative.parts[:2] == ("JX_Servers", "Config") and member.isfile():
+            current = PROJECT_ROOT.joinpath(*relative.parts)
+            if current.exists() or current.is_symlink():
+                # File cấu hình mẫu chỉ dành cho máy chưa có file đó.
+                return None
+        return checked
+
     with tarfile.open(archive, "r:gz") as bundle:
-        bundle.extractall(PROJECT_ROOT.parent, filter="data")
+        bundle.extractall(PROJECT_ROOT.parent, filter=preserve_machine_config)
 
 
 def run_update_script():

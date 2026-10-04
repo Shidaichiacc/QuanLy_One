@@ -100,6 +100,23 @@ class ArchiveTests(unittest.TestCase):
         for name in sentinels:
             self.assertEqual((live / name).read_text(), 'must survive')
 
+    def test_extract_preserves_local_config_and_installs_new_defaults(self):
+        live = self.root / 'QuanLy_One'
+        config = live / 'JX_Servers/Config'
+        config.mkdir(parents=True)
+        original = '[mssql]\npassword=private-local-value\nserver=custom-host\n'
+        (config / 'mssql.ini').write_text(original)
+        existing = tarfile.TarInfo('QuanLy_One/JX_Servers/Config/mssql.ini')
+        existing.size = 10
+        new = tarfile.TarInfo('QuanLy_One/JX_Servers/Config/new.ini')
+        new.size = 5
+        self.package([existing, new])
+        with patch.object(updater, 'PROJECT_ROOT', live):
+            updater.validate_archive(self.archive, '1.3.5')
+            updater.extract_archive(self.archive)
+        self.assertEqual((config / 'mssql.ini').read_text(), original)
+        self.assertEqual((config / 'new.ini').read_text(), 'xxxxx')
+
     def test_worker_refuses_running_or_unknown_game_state(self):
         for state, code in (('active', 0), ('activating', 0), ('deactivating', 0), ('', 1)):
             with patch.object(updater.subprocess, 'run', return_value=SimpleNamespace(returncode=code, stdout=state)):

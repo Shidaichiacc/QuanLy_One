@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import configparser
 import os
 import re
 from pathlib import Path
@@ -177,3 +178,25 @@ def restore_snapshots(snapshots):
         except OSError as exc:
             errors.append(f"{path}: {exc}")
     return errors
+
+
+def sync_paysys_credentials(project_root):
+    """Restore the local SQL password after older updaters extract config templates.
+
+    Changes only PaySys connection configuration, never the database password.
+    """
+    project_root = Path(project_root)
+    password = read_env(project_root / ".env").get("MSSQL_SA_PASSWORD", "")
+    if not password:
+        raise ValueError("Thiếu MSSQL_SA_PASSWORD; chưa thể đồng bộ cấu hình PaySys")
+    path = project_root / "JX_Servers" / "Config" / "mssql.ini"
+    if path.is_symlink() or not path.is_file():
+        raise ValueError("Thiếu file cấu hình MSSQL hợp lệ cho PaySys")
+    config = configparser.RawConfigParser()
+    try:
+        config.read_string(path.read_text(encoding="latin-1"))
+    except configparser.Error:
+        raise ValueError("Cấu hình MSSQL của PaySys sai định dạng") from None
+    if not config.has_option("mssql", "password"):
+        raise ValueError("Cấu hình PaySys thiếu trường mật khẩu MSSQL")
+    return _replace_ini_values(path, {("mssql", "password"): password}, {})

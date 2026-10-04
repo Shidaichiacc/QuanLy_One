@@ -155,6 +155,16 @@ set -a
 set +a
 if [ -n "${MYSQL_ROOT_PASSWORD:-}" ] && [ -n "${MSSQL_SA_PASSWORD:-}" ]; then
     docker compose --env-file "$project_root/.env" -f "$compose_file" up -d --remove-orphans
+    # Updater cũ có thể đã giải nén mssql.ini mẫu lên cấu hình máy.
+    # Khôi phục mật khẩu kết nối từ .env trước khi báo cập nhật thành công.
+    "$admin_root/venv/bin/python" - "$project_root" <<'PYCONFIG'
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[1]) / "app" / "shared"))
+from database_credentials import sync_paysys_credentials
+changed = sync_paysys_credentials(sys.argv[1])
+print(f"Đã kiểm tra cấu hình kết nối PaySys ({changed} trường được đồng bộ).")
+PYCONFIG
     installed_version=$(tr -d '\r\n' < "$project_root/VERSION")
     printf '{"complete":true,"source":"update","version":"%s"}\n' "$installed_version" > "$project_root/data/state/installation.json"
     chmod 600 "$project_root/data/state/installation.json"
