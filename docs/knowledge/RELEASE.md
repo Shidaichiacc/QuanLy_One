@@ -66,3 +66,22 @@ và chọn cách sửa có lịch sử rõ ràng; không tự xóa dấu vết p
   biến thể `.env.*` riêng (vẫn có `.env.example`).
 - Workflow không ghi đè Release đã tồn tại. Nếu upload/công bố lỗi để lại bản nháp,
   kiểm tra asset và checksum trong bản nháp trước khi quyết định công bố thủ công.
+
+## Khôi phục khi tag đã push nhưng workflow chưa tạo Release
+
+Nếu lỗi thuộc workflow/quyền runner, sửa workflow trên `main` và push commit sửa.
+Không xóa hoặc di chuyển tag. Workflow hỗ trợ `workflow_dispatch`: lấy workflow
+mới từ `main`, nhưng checkout và đóng gói đúng mã nguồn của tag được chọn.
+
+```bash
+gh workflow run release.yml --ref main -f release_tag=v1.3.5
+```
+
+Có thể chọn **Actions → Tao goi phat hanh → Run workflow**, branch `main`, nhập
+tag cần phát hành. Chỉ bấm Re-run ở lượt lỗi cũ sẽ dùng lại workflow cũ.
+Luồng vẫn kiểm tra tag/VERSION, chạy tests và từ chối ghi đè Release đã tồn tại.
+Nếu lỗi nằm trong mã nguồn của tag, cần sửa và phát hành tag phiên bản mới.
+
+Kiểm thử dọn log đọc `/proc/*/fd` để kiểm tra file đang mở. Trên Ubuntu runner,
+workflow phải chạy tests bằng `sudo` với đúng Python đã cài dependencies, tương
+tự quyền của Web service. Không bỏ qua lỗi quyền trong mã dọn log.

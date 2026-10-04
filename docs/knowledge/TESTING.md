@@ -90,10 +90,15 @@ service game vẫn giữ trạng thái trước triển khai.
 ## Regression dọn log và cập nhật Release
 
 ```bash
-python3 -m unittest discover -s tests -v
+sudo "$(command -v python3)" -m unittest discover -s tests -v
 ```
 
 Cần dependencies trong `app/web/admin/requirements.txt`. Tests dùng fixture tạm,
 mock systemd/Docker, không chạy `update.sh` hay dọn log thật. Bao phủ preview/xác
 nhận, giữ dữ liệu, chọn đúng asset, xác thực Web/CSRF/mật khẩu/Stop All, checksum,
 archive sai, kiểm tra game đã dừng và giữ VERSION cũ khi cập nhật lỗi.
+
+Bộ kiểm thử dọn log hiện là kiểm thử tích hợp Linux: đọc FD toàn hệ thống nên
+cần root như Web service. Chạy tài khoản thường sẽ bị từ chối tại `/proc/1/fd`.
+GitHub Actions dùng đúng Python từ setup-python với sudo; không tắt kiểm tra
+file đang mở hoặc bỏ các ca kiểm thử để vượt qua bước này.
