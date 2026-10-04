@@ -255,13 +255,34 @@ class WebUpdateTests(unittest.TestCase):
             self.assertEqual(self.post(stop_server='1').status_code, 500)
             start.assert_not_called()
 
+    def test_expired_session_release_cache_is_refreshed(self):
+        with self.client.session_transaction() as session:
+            session['jx_update_status'] = dict(status='ok', latest='1.3.4', checked_at=1,
+                                               cache_id=f'{self.web.APP_VERSION}:{self.web.UPDATE_REPOSITORY}')
+        with patch.object(self.web, '_github_release_status', return_value=self.release) as lookup:
+            response = self.client.get('/api/update-check')
+            self.assertEqual(response.json['latest'], '1.3.5')
+            lookup.assert_called_once()
+
+    def test_fresh_session_cache_and_explicit_refresh(self):
+        import time
+        with self.client.session_transaction() as session:
+            session['jx_update_status'] = dict(status='ok', latest='1.3.4', checked_at=time.time(),
+                                               cache_id=f'{self.web.APP_VERSION}:{self.web.UPDATE_REPOSITORY}')
+        with patch.object(self.web, '_github_release_status', return_value=self.release) as lookup:
+            self.assertEqual(self.client.get('/api/update-check').json['latest'], '1.3.4')
+            lookup.assert_not_called()
+            self.assertEqual(self.client.get('/api/update-check?refresh=1').json['latest'], '1.3.5')
+            lookup.assert_called_once_with(self.web.APP_VERSION, force=True)
+
     def test_update_center_renders_ready_and_error_states(self):
         with patch.object(self.web, '_system_update_status', return_value={'state': 'idle'}), \
              patch.object(self.web, '_host_action_blocked', return_value=None), \
              patch.object(self.web, 'active_server_info', return_value={}), \
              patch.object(self.web, 'available_server_versions', return_value=[]):
-            with patch.object(self.web, '_github_release_status', return_value=self.release):
+            with patch.object(self.web, '_github_release_status', return_value=self.release) as lookup:
                 response = self.client.get('/system/update')
+                lookup.assert_called_once_with(self.web.APP_VERSION, force=True)
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(b'id="startWebUpdate"', response.data)
             with patch.object(self.web, '_github_release_status', return_value={'status': 'error', 'message': 'Missing assets'}):

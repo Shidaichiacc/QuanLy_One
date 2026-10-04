@@ -85,3 +85,8 @@ Nếu lỗi nằm trong mã nguồn của tag, cần sửa và phát hành tag p
 Kiểm thử dọn log đọc `/proc/*/fd` để kiểm tra file đang mở. Trên Ubuntu runner,
 workflow phải chạy tests bằng `sudo` với đúng Python đã cài dependencies, tương
 tự quyền của Web service. Không bỏ qua lỗi quyền trong mã dọn log.
+
+Từ v1.3.6, trang cập nhật luôn kiểm tra GitHub mới; cache phiên/server tối đa 5
+phút và không giữ kết quả vô hạn trong sessionStorage. Nếu máy cũ bị lỗi nút
+cập nhật do JavaScript (v1.3.3–v1.3.5), cần sửa giao diện tại máy đó trước hoặc
+dùng hướng dẫn cập nhật thủ công sau Stop All. Gói v1.3.6 chứa bản sửa lâu dài.

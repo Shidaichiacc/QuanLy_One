@@ -102,3 +102,15 @@ Bộ kiểm thử dọn log hiện là kiểm thử tích hợp Linux: đọc FD
 cần root như Web service. Chạy tài khoản thường sẽ bị từ chối tại `/proc/1/fd`.
 GitHub Actions dùng đúng Python từ setup-python với sudo; không tắt kiểm tra
 file đang mở hoặc bỏ các ca kiểm thử để vượt qua bước này.
+
+## Kiểm thử trình duyệt trang cập nhật
+
+```bash
+python3 -m pip install playwright
+python3 -m playwright install --with-deps chromium
+python3 tests/check_update_browser.py
+```
+
+Bài kiểm thử chặn mọi request bằng fixture, kiểm tra JavaScript thực thi, nhận
+phiên bản mới, nhập mật khẩu, hủy/xác nhận Stop All và hiển thị tiến độ. Không
+khởi chạy updater thật. Workflow phải chạy bước này trước đóng gói Release.

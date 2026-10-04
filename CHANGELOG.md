@@ -1,5 +1,13 @@
 # Lịch sử phiên bản
 
+## v1.3.6
+
+- Sửa JavaScript của trang cập nhật bị lỗi xuống dòng khiến nút Cập nhật ngay không mở hộp nhập mật khẩu.
+- Bỏ bộ nhớ đệm phiên bản ở trình duyệt, giới hạn cache phiên/server còn 5 phút; trang cập nhật luôn kiểm tra GitHub mới và có nút Kiểm tra lại.
+- Hủy xác nhận Stop All trả lại nút cập nhật khả dụng, không báo lỗi giả.
+- Bổ sung kiểm thử Chromium cho nút cập nhật, nhập mật khẩu, hủy/xác nhận Stop All và hiển thị tiến độ; đưa vào workflow trước khi đóng gói.
+- Workflow chạy kiểm thử tích hợp với quyền cần thiết và hỗ trợ phát hành tag đã có qua Run workflow.
+
 ## v1.3.5
 
 - Làm lại quản lý dung lượng thành trang dọn log/dump gọn: thống kê log server, crash/dump, log QuanLy One và dịch vụ; nút Dọn nhanh chọn giữ 1 ngày/7 ngày hoặc dọn tất cả, xem trước rồi xác nhận.

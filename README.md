@@ -3,7 +3,7 @@
 Web quản trị JX trên Ubuntu: quản lý nhiều phiên bản server, Start/Stop/Reload,
 Console realtime, MySQL, MSSQL, backup/restore, MOD và Website công khai.
 
-Phiên bản ổn định hiện tại: **v1.3.5**
+Phiên bản ổn định hiện tại: **v1.3.6**
 Mã nguồn và bản phát hành: <https://github.com/Shidaichiacc/QuanLy_One>
 
 > Gói JXNative không chứa server game. Sau khi cài Web và database, hãy đưa
@@ -49,10 +49,10 @@ sudo bash install.sh
 
 ```bash
 cd /opt
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.5/JXNative-v1.3.5.tar.gz
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.5/JXNative-v1.3.5.tar.gz.sha256
-sudo sha256sum -c JXNative-v1.3.5.tar.gz.sha256
-sudo tar -xzf JXNative-v1.3.5.tar.gz -C /opt
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.6/JXNative-v1.3.6.tar.gz
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.6/JXNative-v1.3.6.tar.gz.sha256
+sudo sha256sum -c JXNative-v1.3.6.tar.gz.sha256
+sudo tar -xzf JXNative-v1.3.6.tar.gz -C /opt
 cd /opt/QuanLy_One
 sudo bash install.sh
 ```
@@ -174,7 +174,8 @@ Hai theme có HTML/CSS riêng; chỉ dùng chung dữ liệu cần thiết như 
 
 ## 7. Kiểm tra và nâng cấp phiên bản
 
-Sau khi đăng nhập, JXNative kiểm tra GitHub Release một lần trong phiên. Kết
+Sau khi đăng nhập, JXNative kiểm tra GitHub Release với bộ nhớ đệm tối đa 5 phút.
+Mở trang cập nhật hoặc bấm **Kiểm tra lại** sẽ lấy thông tin mới từ GitHub. Kết
 quả nằm ngay dưới số phiên bản ở cuối sidebar. Bấm vào trạng thái này để xem
 Release, tải gói hoặc mở trang **Cập nhật ngay**.
 
@@ -228,10 +229,10 @@ git status --short
 git diff --check
 # Chỉ stage các thay đổi mã nguồn đã kiểm tra.
 git add .
-git commit -m "Release v1.3.5"
+git commit -m "Release v1.3.6"
 git push origin main
-git tag -a v1.3.5 -m "Release v1.3.5"
-git push origin v1.3.5
+git tag -a v1.3.6 -m "Release v1.3.6"
+git push origin v1.3.6
 ```
 
 Tag phải đúng bằng chữ `v` cộng nội dung file `VERSION`. Không commit server
