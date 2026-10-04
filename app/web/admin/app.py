@@ -3380,7 +3380,11 @@ pre.log{background:#05080f;border:1px solid var(--line);border-radius:9px;paddin
 {{ body|safe }}
 </main></div>
 <div class="jx-dialog-overlay" id="jxDialogOverlay" hidden aria-hidden="true"><section class="jx-dialog" id="jxDialog" role="dialog" aria-modal="true" aria-labelledby="jxDialogTitle"><div class="jx-dialog-head"><span class="jx-dialog-icon" id="jxDialogIcon">?</span><h2 id="jxDialogTitle">Xác nhận thao tác</h2></div><div class="jx-dialog-body"><p class="jx-dialog-message" id="jxDialogMessage"></p><input class="jx-dialog-input" id="jxDialogInput" autocomplete="off" hidden><div class="jx-dialog-error" id="jxDialogError"></div></div><div class="jx-dialog-foot"><button type="button" class="mut" id="jxDialogCancel">Hủy</button><button type="button" class="jx-dialog-confirm" id="jxDialogConfirm">Xác nhận</button></div></section></div>
-<dialog class="update-dialog" id="updateDialog"><div class="update-dialog-head"><span class="update-dialog-icon" id="updateDialogIcon">↻</span><div><small>CẬP NHẬT JXNATIVE</small><h2 id="updateDialogTitle">Đang kiểm tra…</h2></div><button type="button" class="mut update-dialog-close" aria-label="Đóng">✕</button></div><div class="update-dialog-body"><p id="updateDialogMessage">Đang đọc bản phát hành mới nhất từ GitHub.</p><p class="update-dialog-note" id="updateDialogNote" hidden>Có thể xem Release, tải gói hoặc cập nhật trực tiếp trên máy chủ.</p></div><div class="update-dialog-actions"><button type="button" class="mut" id="updateRetry">Kiểm tra lại</button><a class="btn mut" id="updateRelease" target="_blank" rel="noopener" hidden>Xem Release</a><a class="btn mut" id="updateDownload" target="_blank" rel="noopener" hidden>Tải về</a><a class="btn ok" id="updateCenter" href="{{url_for('update_center', start=1)}}" hidden>Cập nhật ngay</a><button type="button" class="update-dialog-close">Đóng</button></div></dialog>
+<dialog class="update-dialog" id="updateDialog" data-start-url="{{url_for('system_update_start')}}" data-status-url="{{url_for('system_update_status')}}" data-csrf="{{manager_csrf}}">
+<div class="update-dialog-head"><span class="update-dialog-icon" id="updateDialogIcon">↻</span><div><small>CẬP NHẬT JXNATIVE</small><h2 id="updateDialogTitle">Đang kiểm tra…</h2></div><button type="button" class="mut update-dialog-close" aria-label="Đóng">✕</button></div>
+<div class="update-dialog-body"><p id="updateDialogMessage">Đang đọc bản phát hành mới nhất từ GitHub.</p><p class="update-dialog-note" id="updateDialogNote" hidden>Bấm cập nhật sẽ Stop All an toàn nếu game đang chạy, rồi cài phiên bản mới.</p>
+<div id="updatePopupProgress" class="update-popup-progress" role="status" aria-live="polite" hidden><div class="update-popup-progress-head"><b id="updatePopupPhase">Đang chuẩn bị</b><strong id="updatePopupPercent">0%</strong></div><progress id="updatePopupBar" value="0" max="100"></progress><p id="updatePopupMessage"></p><details><summary>Chi tiết</summary><pre id="updatePopupLog"></pre></details></div></div>
+<div class="update-dialog-actions"><button type="button" class="mut" id="updateRetry">Kiểm tra lại</button><a class="btn mut" id="updateRelease" target="_blank" rel="noopener" hidden>Xem Release</a><a class="btn mut" id="updateDownload" hidden>Tải về</a><button type="button" class="ok" id="updateCenter" hidden>Cập nhật ngay</button><button type="button" class="update-dialog-close" id="updatePopupClose">Đóng</button></div></dialog>
 <script>
 (function(){
   const overlay=document.getElementById('jxDialogOverlay'),dialog=document.getElementById('jxDialog'),title=document.getElementById('jxDialogTitle'),icon=document.getElementById('jxDialogIcon'),message=document.getElementById('jxDialogMessage'),input=document.getElementById('jxDialogInput'),error=document.getElementById('jxDialogError'),cancel=document.getElementById('jxDialogCancel'),accept=document.getElementById('jxDialogConfirm');let finish=null,mode='confirm',options={};
@@ -3407,27 +3411,14 @@ pre.log{background:#05080f;border:1px solid var(--line);border-radius:9px;paddin
   let refreshing=false;async function refresh(){if(refreshing)return;refreshing=true;try{const response=await fetch(status.dataset.url,{headers:{Accept:'application/json'},cache:'no-store'});if(response.ok)update(await response.json())}catch(e){}finally{refreshing=false}}
   refresh();setInterval(refresh,5000);setInterval(renderClock,1000);
 })();
-(function(){
-  const link=document.getElementById('sidebarUpdate'),dialog=document.getElementById('updateDialog');if(!link||!dialog)return;
-  const label=link.querySelector('.sidebar-update-label'),icon=link.querySelector('.sidebar-update-icon'),title=document.getElementById('updateDialogTitle'),message=document.getElementById('updateDialogMessage'),note=document.getElementById('updateDialogNote'),release=document.getElementById('updateRelease'),download=document.getElementById('updateDownload'),center=document.getElementById('updateCenter'),retry=document.getElementById('updateRetry'),dialogIcon=document.getElementById('updateDialogIcon');
-  let current=null;
-  function render(data){current=data;link.classList.remove('available','checked','failed');release.hidden=true;download.hidden=true;center.hidden=true;note.hidden=true;if(data.status==='ok'&&data.available){link.classList.add('available');icon.textContent='↑';label.textContent='Có bản v'+data.latest;link.title='Có bản JXNative v'+data.latest;dialogIcon.textContent='↑';title.textContent='Có bản mới v'+data.latest;message.textContent='Máy đang dùng v'+data.current+'. Chọn cách cập nhật bên dưới.';note.hidden=false;center.hidden=false}else if(data.status==='ok'){link.classList.add('checked');icon.textContent='✓';label.textContent='Đã là bản mới nhất';link.title='JXNative đang ở bản mới nhất';dialogIcon.textContent='✓';title.textContent='Đã là bản mới nhất';message.textContent='Máy đang dùng JXNative v'+data.current+'.';}else if(data.status==='no_release'){link.classList.add('checked');icon.textContent='•';label.textContent='Chưa có bản phát hành';link.title=data.message||'Repository chưa có Release';dialogIcon.textContent='•';title.textContent='Chưa có bản phát hành';message.textContent=data.message||'GitHub chưa có Release chính thức.'}else{link.classList.add('failed');icon.textContent='!';label.textContent='Không kiểm tra được';link.title=data.message||'Không kiểm tra được GitHub';dialogIcon.textContent='!';title.textContent='Không kiểm tra được';message.textContent=data.message||'Không thể kết nối GitHub lúc này.'}if(data.url){release.href=data.url;release.hidden=false}if(data.available&&data.download_url){download.href=data.download_url;download.hidden=false}}
-  async function check(force=false){retry.disabled=true;try{const response=await fetch(link.dataset.checkUrl+(force?'?refresh=1':''),{headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();render(data);}catch(error){render({status:'error',message:'Lỗi kết nối GitHub: '+(error.message||'không xác định')})}finally{retry.disabled=false}}
-  center.addEventListener('click',event=>{
-    const start=document.getElementById('startWebUpdate');
-    if(!start)return;
-    event.preventDefault();dialog.close();start.scrollIntoView({block:'center'});start.click();
-  });
-  link.addEventListener('click',()=>{if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');check(true)});
-  dialog.querySelectorAll('.update-dialog-close').forEach(button=>button.addEventListener('click',()=>dialog.close()));dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});retry.addEventListener('click',()=>check(true));
-  check();
-})();
 </script></body></html>
 """
 _ADMIN_POLISH_CSS = (Path(__file__).with_name("polish.css")).read_text(encoding="utf-8")
 BASE = BASE.replace("</head>", "<style>" + _ADMIN_POLISH_CSS + "</style></head>", 1)
 _ADMIN_DATABASE_JS = (Path(__file__).with_name("database_tools.js")).read_text(encoding="utf-8")
 BASE = BASE.replace("</body>", "<script>" + _ADMIN_DATABASE_JS + "</script></body>", 1)
+_ADMIN_UPDATE_JS = Path(__file__).with_name("update_dialog.js").read_text(encoding="utf-8")
+BASE = BASE.replace("</body>", "<script>" + _ADMIN_UPDATE_JS + "</script></body>", 1)
 
 def page(body, **kw):
     kw.setdefault("host_locked", _host_action_blocked("thực hiện thao tác máy chủ") is not None)
@@ -3743,110 +3734,8 @@ def _system_update_conflict():
 
 @app.route("/system/update")
 def update_center():
-    release = _github_release_status(APP_VERSION, force=True)
-    session.pop("jx_update_status", None)
-    latest = str(release.get("latest") or "").strip()
-    archive_name = str(release.get("download_name") or f"JXNative-v{latest}.tar.gz")
-    manual_commands = ""
-    if latest and release.get("download_url") and release.get("checksum_url"):
-        manual_commands = "\n".join((
-            "cd /opt",
-            f"sudo wget -O {archive_name} {release['download_url']}",
-            f"sudo wget -O {archive_name}.sha256 {release['checksum_url']}",
-            f"sudo sha256sum -c {archive_name}.sha256",
-            f"sudo tar -xzf {archive_name} -C /opt",
-            "cd /opt/QuanLy_One",
-            "sudo bash update.sh",
-        ))
-    status = _system_update_status()
-    body = r"""
-    <style>
-    .update-center{max-width:860px;margin:0 auto}.update-compact{padding:18px 20px}.update-head{display:flex;align-items:center;gap:14px}.update-head>div{min-width:0;flex:1}.update-head h1{margin:0 0 4px;font-size:23px}.update-version{font-size:13px;color:var(--mut)}.update-version b{color:var(--fg)}.update-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.update-actions .btn,.update-actions button{min-width:130px;text-align:center}.update-state{margin-top:16px;padding:13px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025)}.update-state[hidden]{display:none}.update-state-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}.update-state progress{width:100%;height:18px;accent-color:var(--ok)}.update-state[data-state="success"]{border-color:var(--ok)}.update-state[data-state="error"]{border-color:var(--err)}#updateDone{display:inline-block;margin-top:12px}#updateDone[hidden]{display:none}.update-state p{margin:7px 0 0;color:var(--mut);font-size:12px}.update-log{margin:10px 0 0;max-height:150px;overflow:auto;font:11px/1.5 ui-monospace,Consolas,monospace;color:#b8c5d2}.update-manual{margin-top:12px;border:1px solid var(--line);border-radius:10px}.update-manual summary{cursor:pointer;padding:12px 14px;font-weight:700}.update-manual pre{margin:0 12px 12px;max-height:none}.update-error{min-height:18px;color:var(--err);font-size:12px;margin:9px 0 0}@media(max-width:560px){.update-head{align-items:flex-start}.update-actions>*{width:100%}}
-    </style>
-    <div class="update-center"><section class="card update-compact">
-      <div class="update-head"><span class="update-dialog-icon">{{'↑' if release.status=='ok' and release.available else '✓'}}</span><div><h1>Cập nhật JXNative</h1><div class="update-version">Đang dùng <b>v{{app_version}}</b>{% if release.status=='ok' %} · Mới nhất <b>v{{release.latest}}</b>{% endif %}</div></div></div>
-      {% if release.status=='ok' and release.available %}<p>Có bản mới sẵn sàng. Hãy backup dữ liệu quan trọng trước khi cập nhật.</p>{% elif release.status=='ok' %}<p>Máy đang dùng phiên bản mới nhất.</p>{% else %}<p class="update-error">{{release.message or 'Không kiểm tra được GitHub Release.'}}</p>{% endif %}
-      <div class="update-actions">
-        <a class="btn mut" href="{{url_for('update_center', refresh=1)}}">Kiểm tra lại</a>
-        {% if release.url %}<a class="btn mut" href="{{release.url}}" target="_blank" rel="noopener">Xem Release</a>{% endif %}
-        {% if release.download_url %}<a class="btn mut" href="{{release.download_url}}">Tải về</a>{% endif %}
-        {% if release.status=='ok' and release.available and release.download_url and release.checksum_url %}<button class="ok" id="startWebUpdate">Cập nhật ngay</button>{% endif %}
-      </div><p class="update-error" id="updateError"></p>
-      <div class="update-state" id="updateState" role="status" aria-live="polite" {% if status.state=='idle' %}hidden{% endif %}><div class="update-state-head"><b id="updatePhase">{{status.phase}}</b><span id="updatePercent">{{status.percent}}%</span></div><progress id="updateProgress" max="100" value="{{status.percent}}"></progress><p id="updateMessage">{{status.message}}</p><div class="update-log" id="updateLog"></div><a class="btn ok" id="updateDone" href="{{url_for('update_center')}}" hidden>Hoàn tất · Tải lại trang</a></div>
-      {% if manual_commands %}<details class="update-manual"><summary>Tự cập nhật bằng lệnh</summary><pre class="log">{{manual_commands}}</pre></details>{% endif %}
-    </section></div>
-    <script>
-    (function(){
-      const start=document.getElementById('startWebUpdate'),stateBox=document.getElementById('updateState'),phase=document.getElementById('updatePhase'),percent=document.getElementById('updatePercent'),bar=document.getElementById('updateProgress'),message=document.getElementById('updateMessage'),log=document.getElementById('updateLog'),error=document.getElementById('updateError'),done=document.getElementById('updateDone');
-      let polling=false,finished=false,asking=false;
-      function render(data){
-        stateBox.hidden=false;
-        const value=Number(data.percent||0),progress=data.state==='success'?100:Math.max(0,Math.min(100,Number.isFinite(value)?value:0));
-        stateBox.dataset.state=data.state||'working';
-        phase.textContent=data.state==='success'?'Cập nhật thành công':(data.phase||'Đang cập nhật');
-        percent.textContent=progress+'%';bar.value=progress;
-        message.textContent=data.message||'';
-        const rows=Array.isArray(data.logs)?data.logs:[];
-        log.textContent=rows.map(row=>`[${row.time||''}] ${row.phase||''}${row.message?' — '+row.message:''}`).join('\n');log.scrollTop=log.scrollHeight;
-        done.hidden=data.state!=='success';
-        if(data.state==='error'){
-          error.textContent=data.message||'Cập nhật thất bại';if(start)start.disabled=false;finished=true;
-        }else if(data.state==='success'){
-          error.textContent='';if(start)start.disabled=true;finished=true;
-        }else if(start){start.disabled=true}
-      }
-      async function poll(){
-        if(polling||finished)return;polling=true;
-        try{
-          const response=await fetch({{url_for('system_update_status')|tojson}},{cache:'no-store',headers:{Accept:'application/json'}});
-          if(response.redirected||response.status===401||response.status===403){
-            render({state:'error',percent:bar.value,phase:'Cần đăng nhập lại',message:'Phiên đăng nhập đã hết. Đăng nhập lại và mở trang này để xem tiến độ.'});return;
-          }
-          if(!response.ok)throw new Error('HTTP '+response.status);
-          render(await response.json());
-        }catch(e){
-          stateBox.hidden=false;phase.textContent='Đang chờ Web kết nối lại';message.textContent='Tiến trình cập nhật có thể vẫn đang chạy. Trang sẽ tự kết nối lại…';
-        }finally{polling=false;if(!finished)setTimeout(poll,1200)}
-      }
-      async function launch(password,stopServer){
-        error.textContent='';finished=false;
-        render({state:'working',percent:0,phase:stopServer?'Đang Stop All an toàn':'Đang xác nhận cập nhật',message:stopServer?'Chờ server lưu dữ liệu và dừng trước khi cập nhật…':'Đang xác thực mật khẩu và kiểm tra bản phát hành…'});
-        stateBox.scrollIntoView({behavior:'smooth',block:'nearest'});
-        const body=new FormData();body.set('csrf_token',{{manager_csrf|tojson}});body.set('admin_password',password);body.set('stop_server',stopServer?'1':'0');
-        try{
-          const response=await fetch({{url_for('system_update_start')|tojson}},{method:'POST',body,headers:{Accept:'application/json'}});
-          if(response.redirected)throw new Error('Phiên đăng nhập đã hết. Hãy đăng nhập lại.');
-          const data=await response.json();
-          if(response.status===409&&data.requires_stop){
-            const approved=await window.JXDialog.confirm('Server game đang chạy. QuanLy One sẽ Stop All an toàn rồi cập nhật. Tiếp tục?',{danger:true,confirmText:'Stop All và cập nhật'});
-            if(approved)return launch(password,true);
-            start.disabled=false;stateBox.hidden=true;return;
-          }
-          if(!response.ok)throw new Error(data.error||'Không bắt đầu được cập nhật');
-          render({state:'queued',percent:1,phase:'Đã nhận yêu cầu',message:'Đang khởi động tiến trình cập nhật…'});poll();
-        }catch(e){render({state:'error',percent:bar.value,phase:'Không bắt đầu được cập nhật',message:e.message||String(e)})}
-      }
-      async function begin(){
-        if(!start||start.disabled||asking)return;asking=true;
-        try{
-          const password=await window.JXDialog.prompt('Nhập mật khẩu Admin hiện tại để xác nhận cập nhật hệ thống.',{title:'Xác nhận cập nhật',inputType:'password',confirmText:'Bắt đầu cập nhật'});
-          if(password!==null&&password!=='')await launch(password,false);
-        }finally{asking=false}
-      }
-      if(start)start.addEventListener('click',begin);
-      const initial={{status|tojson}};
-      if(initial.state!=='idle'){render(initial);if(['queued','working'].includes(initial.state))poll()}
-      if(initial.state==='success'&&{{release.available|default(false)|tojson}}&&start)start.disabled=false;
-      document.addEventListener('DOMContentLoaded',()=>{
-        const url=new URL(location.href);
-        if(url.searchParams.get('start')==='1'){
-          url.searchParams.delete('start');history.replaceState(null,'',url);begin();
-        }
-      },{once:true});
-    })();
-    </script>
-    """
-    return page(body, page="update", release=release, status=status, manual_commands=manual_commands)
+    # Giữ liên kết cũ hoạt động, toàn bộ thao tác nằm trong popup trên dashboard.
+    return redirect(url_for("dashboard", update="1"))
 
 
 @app.post("/system/update/start")
@@ -3855,8 +3744,7 @@ def system_update_start():
     expected = session.get("csrf_token", "")
     if not supplied or not expected or not hmac.compare_digest(supplied, expected):
         return jsonify(error="Phiên biểu mẫu không hợp lệ."), 400
-    if not verify_manager_password(request.form.get("admin_password", "")):
-        return jsonify(error="Mật khẩu Admin hiện tại không đúng."), 403
+    # Đã có phiên Admin và CSRF hợp lệ; không yêu cầu nhập lại mật khẩu.
     conflict = _system_update_conflict()
     if conflict:
         return jsonify(error=conflict), 409

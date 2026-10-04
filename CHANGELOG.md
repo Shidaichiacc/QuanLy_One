@@ -1,5 +1,11 @@
 # Lịch sử phiên bản
 
+## v1.3.8
+
+- Gom thao tác cập nhật vào popup dùng chung: một nút bắt đầu, không chuyển trang hoặc yêu cầu nhập lại mật khẩu Admin; vẫn kiểm tra phiên đăng nhập, CSRF và Stop All an toàn.
+- Hiển thị tiến độ, kết quả và lỗi trong popup; đóng/mở lại hoặc tải lại trang vẫn theo dõi tác vụ. Không hiển thị nhầm kết quả thành công của lần cập nhật cũ.
+- Liên kết /system/update cũ chuyển về Bảng điều khiển và mở popup, không tự bắt đầu cập nhật.
+
 ## v1.3.7
 
 - Sửa cập nhật ghi đè mật khẩu MSSQL trong cấu hình PaySys khiến Start All dừng ở cổng 5002 dù database khỏe: giữ các file cấu hình máy đã tồn tại khi giải nén, và đồng bộ mật khẩu kết nối từ .env trong update.sh để tương thích updater cũ. Không đổi mật khẩu hoặc dữ liệu database.

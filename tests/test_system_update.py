@@ -228,17 +228,22 @@ class WebUpdateTests(unittest.TestCase):
             session.update(manager_authenticated=True, csrf_token='csrf')
 
     def post(self, **overrides):
-        return self.client.post('/system/update/start', data=dict(csrf_token='csrf', admin_password='test', **overrides))
+        return self.client.post('/system/update/start', data=dict(csrf_token='csrf', **overrides))
 
-    def test_auth_csrf_and_password(self):
+    def test_auth_and_csrf_remain_required(self):
         with self.client.session_transaction() as session:
             session.clear()
         self.assertEqual(self.post().status_code, 302)
         with self.client.session_transaction() as session:
             session.update(manager_authenticated=True, csrf_token='csrf')
         self.assertEqual(self.client.post('/system/update/start').status_code, 400)
-        with patch.object(self.web, 'verify_manager_password', return_value=False):
-            self.assertEqual(self.post().status_code, 403)
+        with patch.object(self.web, '_github_release_status', return_value=self.release), \
+             patch.object(self.web, 'unit_active', return_value=False), \
+             patch.object(self.web, '_start_system_update') as start, \
+             patch.object(self.web, 'verify_manager_password', return_value=False) as password:
+            self.assertEqual(self.post().status_code, 202)
+            password.assert_not_called()
+            start.assert_called_once()
 
     def test_missing_assets_does_not_stop_game(self):
         self.release['checksum_url'] = ''
@@ -292,21 +297,10 @@ class WebUpdateTests(unittest.TestCase):
             self.assertEqual(self.client.get('/api/update-check?refresh=1').json['latest'], '1.3.5')
             lookup.assert_called_once_with(self.web.APP_VERSION, force=True)
 
-    def test_update_center_renders_ready_and_error_states(self):
-        with patch.object(self.web, '_system_update_status', return_value={'state': 'idle'}), \
-             patch.object(self.web, '_host_action_blocked', return_value=None), \
-             patch.object(self.web, 'active_server_info', return_value={}), \
-             patch.object(self.web, 'available_server_versions', return_value=[]):
-            with patch.object(self.web, '_github_release_status', return_value=self.release) as lookup:
-                response = self.client.get('/system/update')
-                lookup.assert_called_once_with(self.web.APP_VERSION, force=True)
-                self.assertEqual(response.status_code, 200)
-                self.assertIn(b'id="startWebUpdate"', response.data)
-            with patch.object(self.web, '_github_release_status', return_value={'status': 'error', 'message': 'Missing assets'}):
-                response = self.client.get('/system/update')
-                self.assertEqual(response.status_code, 200)
-                self.assertIn(b'Missing assets', response.data)
-                self.assertNotIn(b'id="startWebUpdate"', response.data)
+    def test_old_update_page_opens_dashboard_popup(self):
+        response = self.client.get('/system/update')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.location, '/?update=1')
 
     def test_release_selects_exact_assets_and_reports_missing_pair(self):
         assets = [{'name': 'unrelated.tar.gz', 'browser_download_url': 'https://example.com/no'}]

@@ -95,7 +95,7 @@ sudo "$(command -v python3)" -m unittest discover -s tests -v
 
 Cần dependencies trong `app/web/admin/requirements.txt`. Tests dùng fixture tạm,
 mock systemd/Docker, không chạy `update.sh` hay dọn log thật. Bao phủ preview/xác
-nhận, giữ dữ liệu, chọn đúng asset, xác thực Web/CSRF/mật khẩu/Stop All, checksum,
+nhận, giữ dữ liệu, chọn đúng asset, xác thực Web/CSRF/Stop All, checksum,
 archive sai, kiểm tra game đã dừng và giữ VERSION cũ khi cập nhật lỗi.
 
 Bộ kiểm thử dọn log hiện là kiểm thử tích hợp Linux: đọc FD toàn hệ thống nên
@@ -112,5 +112,6 @@ python3 tests/check_update_browser.py
 ```
 
 Bài kiểm thử chặn mọi request bằng fixture, kiểm tra JavaScript thực thi, nhận
-phiên bản mới, nhập mật khẩu, hủy/xác nhận Stop All và hiển thị tiến độ. Không
+phiên bản mới, cập nhật ngay trong popup không nhập lại mật khẩu, một POST
+duy nhất kèm CSRF/Stop All, phục hồi sau tải lại trang, tiến độ và kết quả. Không
 khởi chạy updater thật. Workflow phải chạy bước này trước đóng gói Release.

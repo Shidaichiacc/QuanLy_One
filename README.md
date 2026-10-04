@@ -3,7 +3,7 @@
 Web quản trị JX trên Ubuntu: quản lý nhiều phiên bản server, Start/Stop/Reload,
 Console realtime, MySQL, MSSQL, backup/restore, MOD và Website công khai.
 
-Phiên bản ổn định hiện tại: **v1.3.7**
+Phiên bản ổn định hiện tại: **v1.3.8**
 Mã nguồn và bản phát hành: <https://github.com/Shidaichiacc/QuanLy_One>
 
 > Gói JXNative không chứa server game. Sau khi cài Web và database, hãy đưa
@@ -49,10 +49,10 @@ sudo bash install.sh
 
 ```bash
 cd /opt
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.7/JXNative-v1.3.7.tar.gz
-sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.7/JXNative-v1.3.7.tar.gz.sha256
-sudo sha256sum -c JXNative-v1.3.7.tar.gz.sha256
-sudo tar -xzf JXNative-v1.3.7.tar.gz -C /opt
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.8/JXNative-v1.3.8.tar.gz
+sudo wget https://github.com/Shidaichiacc/QuanLy_One/releases/download/v1.3.8/JXNative-v1.3.8.tar.gz.sha256
+sudo sha256sum -c JXNative-v1.3.8.tar.gz.sha256
+sudo tar -xzf JXNative-v1.3.8.tar.gz -C /opt
 cd /opt/QuanLy_One
 sudo bash install.sh
 ```
@@ -175,14 +175,15 @@ Hai theme có HTML/CSS riêng; chỉ dùng chung dữ liệu cần thiết như 
 ## 7. Kiểm tra và nâng cấp phiên bản
 
 Sau khi đăng nhập, JXNative kiểm tra GitHub Release với bộ nhớ đệm tối đa 5 phút.
-Mở trang cập nhật hoặc bấm **Kiểm tra lại** sẽ lấy thông tin mới từ GitHub. Kết
-quả nằm ngay dưới số phiên bản ở cuối sidebar. Bấm vào trạng thái này để xem
-Release, tải gói hoặc mở trang **Cập nhật ngay**.
+Bấm trạng thái phiên bản ở cuối sidebar để mở popup. **Cập nhật ngay** bắt đầu
+ngay trong popup, không chuyển trang và không yêu cầu nhập lại mật khẩu Admin.
+Nếu game đang chạy, nút này đồng thời cho phép Stop All an toàn trước cập nhật.
+Phiên đăng nhập và CSRF vẫn được kiểm tra.
 
-Cập nhật trực tiếp yêu cầu nhập lại mật khẩu Admin. Nếu game đang chạy, Web
-sẽ hỏi xác nhận trước khi Stop All an toàn. Tiến trình riêng tải gói `.tar.gz`
-và SHA256 từ đúng GitHub Release, xác minh, giải nén rồi chạy `update.sh`; trang
-sẽ tự nối lại và tiếp tục hiển thị tiến độ khi Web khởi động lại.
+Tiến trình riêng tải gói `.tar.gz` và SHA256 từ đúng GitHub Release, xác minh,
+giải nén rồi chạy `update.sh`. Popup hiển thị phần trăm, bước đang chạy và kết
+quả. Có thể đóng/mở popup hoặc tải lại trang để tiếp tục theo dõi; trang tự nối
+lại khi Web khởi động lại. Mở popup chỉ kiểm tra phiên bản, không tự cài bản mới.
 
 Quy trình nâng cấp an toàn:
 
@@ -229,10 +230,10 @@ git status --short
 git diff --check
 # Chỉ stage các thay đổi mã nguồn đã kiểm tra.
 git add .
-git commit -m "Release v1.3.7"
+git commit -m "Release v1.3.8"
 git push origin main
-git tag -a v1.3.7 -m "Release v1.3.7"
-git push origin v1.3.7
+git tag -a v1.3.8 -m "Release v1.3.8"
+git push origin v1.3.8
 ```
 
 Tag phải đúng bằng chữ `v` cộng nội dung file `VERSION`. Không commit server

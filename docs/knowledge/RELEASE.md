@@ -101,3 +101,11 @@ có thể đã ghi đè cấu hình bằng mẫu trong gói. Việc này không 
 
 Sau cập nhật, kiểm tra đăng nhập MSSQL, cấu hình PaySys và Start All đủ sáu
 thành phần; chỉ thấy container healthy chưa đủ xác nhận game kết nối được.
+
+## Luồng cập nhật từ v1.3.8
+
+Quản trị viên mở popup từ trạng thái phiên bản ở cuối sidebar, bấm Cập nhật
+ngay để bắt đầu. Không hỏi lại mật khẩu, không chuyển sang trang riêng. Yêu
+cầu vẫn cần phiên Admin và CSRF hợp lệ; nút cho phép Stop All an toàn trước
+cập nhật. Popup giữ tiến độ/kết quả và phục hồi khi mở lại hoặc Web khởi động
+lại. Liên kết `/system/update` cũ chỉ mở popup trên dashboard, không tự cài.

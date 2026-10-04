@@ -82,3 +82,15 @@ Nguồn gồm log các phiên bản game, log quản lý, Apport/systemd coredum
 Nginx và Docker. Dump không xác định chủ sở hữu chỉ xem/dọn riêng; Docker chỉ
 thống kê, journal dùng vacuum hệ thống, Nginx chỉ dọn log đã xoay vòng. Backup,
 dữ liệu game và cấu hình không thuộc Dọn nhanh.
+
+## Popup cập nhật dùng chung
+
+`app/web/admin/update_dialog.js` được nhúng vào layout Admin dùng chung. Popup
+kiểm tra Release/trạng thái, gửi POST có CSRF và `stop_server=1` khi quản trị viên
+bấm nút, rồi theo dõi trạng thái từ worker. Không hỏi lại mật khẩu Admin. Dấu
+đánh dấu trong sessionStorage chỉ phục hồi tác vụ đang theo dõi, không tự gửi
+lại yêu cầu và không coi kết quả thành công cũ là lần cập nhật mới.
+
+`/system/update` chỉ chuyển hướng về dashboard mở popup. Không còn trang cập
+nhật riêng. Các chốt kiểm tra phiên đăng nhập, CSRF, backup/database conflict,
+Stop All và gói Release được giữ nguyên.
